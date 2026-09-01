@@ -6,20 +6,20 @@ The database design uses a shared MongoDB database with an explicit `orgId` refe
 
 ```mermaid
 erDiagram
-    ORGANIZATIONS ||--o{ USERS : "belongs to (1:N)"
+    ORGANIZATIONS ||--o{ USERS : "has (1:N)"
     ORGANIZATIONS ||--o{ PROJECTS : "owns (1:N)"
     ORGANIZATIONS ||--o{ TEAMS : "owns (1:N)"
     ORGANIZATIONS ||--o{ NOTIFICATIONS : "scopes (1:N)"
     ORGANIZATIONS ||--o{ AUDIT_LOGS : "tracks (1:N)"
 
     PROJECTS ||--o{ TASKS : "contains (1:N)"
-    PROJECTS }|--o| TEAMS : "assigned to (N:1)"
+    TEAMS ||--o{ PROJECTS : "assigned to (1:N)"
     
     USERS ||--o{ TASKS : "assigned (1:N)"
     USERS ||--o{ TASKS : "reported (1:N)"
     USERS ||--o{ NOTIFICATIONS : "receives (1:N)"
     USERS ||--o{ AUDIT_LOGS : "performs action (1:N)"
-    USERS }|--m| TEAMS : "member of (N:M)"
+    TEAMS }|--|{ USERS : "has members (N:M)"
 
     ORGANIZATIONS {
         ObjectId _id PK
