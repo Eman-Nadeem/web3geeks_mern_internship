@@ -1,9 +1,11 @@
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import path from 'path';
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+// Ensure environment variables are loaded in non-Next runtime scripts
+if (!process.env.MONGODB_URI) {
+  dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+  dotenv.config({ path: path.resolve(process.cwd(), '.env.example') });
 }
 
 interface MongooseCache {
@@ -23,6 +25,11 @@ if (!global.mongoose) {
 }
 
 export async function connectToDatabase(): Promise<typeof mongoose> {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+  }
+
   if (cached.conn) {
     return cached.conn;
   }
@@ -33,7 +40,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
       maxPoolSize: 10,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI as string, opts).then((mongooseInstance) => {
+    cached.promise = mongoose.connect(uri, opts).then((mongooseInstance) => {
       console.log('Successfully connected to MongoDB Atlas');
       return mongooseInstance;
     });

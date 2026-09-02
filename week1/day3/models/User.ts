@@ -11,6 +11,9 @@ export interface IUser extends Document {
   status: 'ACTIVE' | 'INVITED' | 'DEACTIVATED';
   inviteToken?: string;
   inviteExpiresAt?: Date;
+  refreshTokenHash?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,6 +60,16 @@ const UserSchema: Schema<IUser> = new Schema(
       index: true,
     },
     inviteExpiresAt: {
+      type: Date,
+    },
+    refreshTokenHash: {
+      type: String,
+    },
+    resetPasswordToken: {
+      type: String,
+      index: true,
+    },
+    resetPasswordExpiresAt: {
       type: Date,
     },
   },

@@ -1,28 +1,22 @@
-# Day 2: Technical Foundation, Database Schemas & Multi-Tenant Isolation
+# Day 3: Multi-Tenant Authentication, JWT Session Management & RBAC
 
-Welcome to **Day 2** of the **Multi-Tenant Project Management SaaS System** (Web3Geeks MERN / Next.js Internship).
+Welcome to **Day 3** of the **Multi-Tenant Project Management SaaS System** (Web3Geeks MERN / Next.js Internship).
 
-Day 2 builds directly upon the architectural specifications and database designs established in [Day 1](../day1/readme.md). It delivers a fully functional Next.js App Router (TypeScript) backend foundation with MongoDB Atlas integration, schema-level multi-tenant data isolation (`orgId` discriminator), comprehensive Mongoose schemas, a database seeding suite, and a live health check monitoring endpoint.
-
-> [!NOTE]
-> **Branching & Project Architecture:** This `day2` folder serves as the core baseline codebase. For upcoming daily tasks (Day 3, Day 4, etc.), `day2` will be branched / copied as the starting point for feature implementations.
+Day 3 builds upon the database architecture established in [Day 2](../day2/README.md). It implements complete multi-tenant authentication, JWT session management (access & refresh tokens stored in `httpOnly` cookies and Bearer headers), Edge Middleware tenant-resolution, Role-Based Access Control (RBAC), password reset flows, and an integration test suite.
 
 ---
 
 ## 📋 Table of Contents
 
 - [Overview & Deliverables](#-overview--deliverables)
-- [Tech Stack Selection](#-tech-stack-selection)
+- [Tech Stack & Security Architecture](#-tech-stack--security-architecture)
 - [Directory Structure](#-directory-structure)
-- [Core Architectural Features](#-core-architectural-features)
-  - [1. Multi-Tenant Isolation Scoping](#1-multi-tenant-isolation-scoping)
-  - [2. Singleton Connection Caching](#2-singleton-connection-caching)
-  - [3. Edge Middleware Tenant Resolution](#3-edge-middleware-tenant-resolution)
-  - [4. Mongoose Database Models](#4-mongoose-database-models)
+- [Authentication API Endpoints](#-authentication-api-endpoints)
+- [Role-Based Access Control (RBAC) Matrix](#-role-based-access-control-rbac-matrix)
+- [Multi-Tenant Data Isolation Enforcement](#-multi-tenant-data-isolation-enforcement)
 - [🚀 Local Setup & Installation Guide](#-local-setup--installation-guide)
+- [🧪 Automated Integration Testing](#-automated-integration-testing)
 - [🌱 Database Seeding Engine](#-database-seeding-engine)
-- [🔍 Health Check & Endpoint Verification](#-health-check--endpoint-verification)
-- [🛡️ Security & Environment Best Practices](#️-security--environment-best-practices)
 - [Roadmap & Next Steps](#roadmap--next-steps)
 
 ---
@@ -31,193 +25,235 @@ Day 2 builds directly upon the architectural specifications and database designs
 
 | Deliverable | Location | Description |
 |---|---|---|
-| **1. Backend Skeleton** | [`week1/day2`](file:///d:/web3geeks_mern_internship/week1/day2/) | Next.js App Router project codebase initialized with TypeScript & Tailwind CSS. |
-| **2. Database Connection** | [`lib/db.ts`](file:///d:/web3geeks_mern_internship/week1/day2/lib/db.ts) | Cached singleton Mongoose connection manager optimized for serverless API routes. |
-| **3. Tenant Isolation Strategy** | [`lib/tenantScoping.ts`](file:///d:/web3geeks_mern_internship/week1/day2/lib/tenantScoping.ts) | Security helper `withTenant(query, orgId)` enforcing `{ orgId }` discriminator filtering. |
-| **4. Mongoose Schemas** | [`models/`](file:///d:/web3geeks_mern_internship/week1/day2/models/) | 7 core entity models (`Organization`, `User`, `Project`, `Task`, `Team`, `Notification`, `AuditLog`). |
-| **5. Middleware Stub** | [`middleware.ts`](file:///d:/web3geeks_mern_internship/week1/day2/middleware.ts) | Edge middleware extracting `x-org-id` request headers and setting tenant context. |
-| **6. Health Check Endpoint** | [`app/api/health/route.ts`](file:///d:/web3geeks_mern_internship/week1/day2/app/api/health/route.ts) | `GET /api/health` monitoring system uptime, environment, and MongoDB readyState. |
-| **7. Database Seed Script** | [`scripts/seed.ts`](file:///d:/web3geeks_mern_internship/week1/day2/scripts/seed.ts) | Automated seed script generating tenants (Acme Corp & Stark Industries), users, projects, and tasks. |
+| **1. Auth Utilities & JWT System** | [`lib/auth.ts`](file:///d:/web3geeks_mern_internship/week1/day3/lib/auth.ts) | Edge-compatible JWT signing/verification (`jose`), password hashing (`bcryptjs`), cookie handlers. |
+| **2. RBAC Guard System** | [`lib/rbac.ts`](file:///d:/web3geeks_mern_internship/week1/day3/lib/rbac.ts) | Roles (`SuperAdmin`, `OrgAdmin`, `ProjectManager`, `TeamMember`), permission matrix, API guard helpers. |
+| **3. Real Tenant Middleware** | [`middleware.ts`](file:///d:/web3geeks_mern_internship/week1/day3/middleware.ts) | Edge Middleware verifying JWTs and injecting immutable `x-tenant-id`, `x-user-id`, `x-user-role` headers. |
+| **4. Auth Endpoints** | [`app/api/auth/`](file:///d:/web3geeks_mern_internship/week1/day3/app/api/auth/) | Signup, Login, Token Refresh, Logout, User Session Profile (`/api/auth/me`), Forgot/Reset Password. |
+| **5. Tenant-Scoped Resource APIs** | [`app/api/`](file:///d:/web3geeks_mern_internship/week1/day3/app/api/) | Tenant-isolated endpoints for `/api/users`, `/api/projects`, and `/api/tasks` protected by RBAC guards. |
+| **6. Integration Test Suite** | [`scripts/test-auth.ts`](file:///d:/web3geeks_mern_internship/week1/day3/scripts/test-auth.ts) | Automated test suite validating hashing, JWT issuance, tenant isolation, and RBAC rules (`npm run test:auth`). |
 
 ---
 
-## 🛠️ Tech Stack Selection
+## 🛠️ Tech Stack & Security Architecture
 
-- **Framework:** Next.js 16 (App Router & Server Handlers)
+- **Framework:** Next.js 16 (App Router & Server Route Handlers)
 - **Language:** TypeScript 5
 - **Database:** MongoDB Atlas via Mongoose 8 (ODM)
-- **Validation & Hashing:** Zod 3.22 & Bcryptjs 2.4
-- **Script Runner:** `tsx` (TypeScript Execution)
-- **Styling:** Tailwind CSS v4
+- **JWT & Encryption:** `jose` (Edge-compatible JWT) & `bcryptjs` (Password hashing)
+- **Validation:** Zod 3.22 (Input Schema Validation)
+- **Test Runner:** `tsx` execution (`npm run test:auth`)
+
+### Security Features:
+1. **Preventing Cross-Tenant Spoofing**: `middleware.ts` extracts `orgId` strictly from the signed, cryptographically verified JWT payload (`x-tenant-id`). Any client-supplied `orgId` query parameter or body property is ignored for context resolution.
+2. **Dual-Token System**:
+   - `access_token` (Short-lived, 15 minutes, `httpOnly`, `sameSite: lax`)
+   - `refresh_token` (Long-lived, 7 days, `httpOnly`, `sameSite: lax`)
+3. **Password Security**: Passwords hashed with bcrypt (salt rounds = 10). Password reset tokens generated via `crypto.randomBytes(32)` and stored as SHA-256 hashes.
 
 ---
 
 ## 📁 Directory Structure
 
 ```
-day2/
+day3/
 ├── app/
 │   ├── api/
-│   │   └── health/
-│   │       └── route.ts          # Health check endpoint (GET /api/health)
-│   ├── globals.css               # Base Tailwind CSS rules
-│   ├── layout.tsx                # Root layout component
-│   └── page.tsx                  # Base landing view
+│   │   ├── auth/
+│   │   │   ├── signup/route.ts        # POST /api/auth/signup (Org + Admin bootstrapping)
+│   │   │   ├── login/route.ts         # POST /api/auth/login
+│   │   │   ├── refresh/route.ts       # POST /api/auth/refresh
+│   │   │   ├── logout/route.ts        # POST /api/auth/logout
+│   │   │   ├── me/route.ts            # GET /api/auth/me (Protected user profile)
+│   │   │   ├── forgot-password/route.ts# POST /api/auth/forgot-password
+│   │   │   └── reset-password/route.ts # POST /api/auth/reset-password
+│   │   ├── projects/route.ts          # GET/POST /api/projects (Tenant-scoped + RBAC)
+│   │   ├── tasks/route.ts             # GET/POST /api/tasks (Tenant-scoped + RBAC)
+│   │   ├── users/route.ts             # GET /api/users (Tenant-scoped + RBAC)
+│   │   └── health/route.ts            # System health check endpoint
 ├── lib/
-│   ├── db.ts                     # Cached MongoDB Mongoose connection manager
-│   └── tenantScoping.ts          # Scoping utility enforcing tenant isolation (orgId)
-├── models/                       # Mongoose Schemas & TypeScript Interfaces
-│   ├── AuditLog.ts
-│   ├── Notification.ts
+│   ├── auth.ts                        # JWT issuance, verification, cookie management
+│   ├── rbac.ts                        # Roles, permissions, API authorization guards
+│   ├── db.ts                          # Cached MongoDB connection manager
+│   └── tenantScoping.ts               # Multi-tenant scoping helper (withTenant)
+├── models/                            # Mongoose Schemas & Models
+│   ├── User.ts                        # User schema with refreshTokenHash & resetToken
 │   ├── Organization.ts
 │   ├── Project.ts
 │   ├── Task.ts
 │   ├── Team.ts
-│   └── User.ts
+│   ├── Notification.ts
+│   └── AuditLog.ts
 ├── scripts/
-│   └── seed.ts                   # Database seed script for MongoDB Atlas
-├── .env.example                  # Environment template (NO SECRETS COMMITTED)
-├── .gitignore                    # Environment & build ignore configuration
-├── middleware.ts                 # Next.js Edge Middleware for org header extraction
-├── package.json                  # Scripts & project dependencies
-├── task.md                       # Day 2 task requirements
-└── tsconfig.json                 # TypeScript compiler configuration
+│   ├── seed.ts                        # Database seed script for MongoDB Atlas
+│   └── test-auth.ts                   # Integration test suite runner
+├── middleware.ts                      # Edge Middleware for JWT auth & tenant context
+├── package.json
+└── task.md                            # Day 3 task specifications
 ```
 
 ---
 
-## 🔐 Core Architectural Features
+## 🔑 Authentication API Endpoints
 
-### 1. Multi-Tenant Isolation Scoping
-All tenant-owned models store an `orgId` reference to the `Organization` collection. Database queries leverage `withTenant(query, orgId)` from `lib/tenantScoping.ts`:
+### 1. Organization Signup (`POST /api/auth/signup`)
+Creates a new tenant Organization and its initial `OrgAdmin` user in a single workflow.
+```json
+// Request Body
+{
+  "orgName": "Cyberdyne Systems",
+  "orgSlug": "cyberdyne",
+  "fullName": "Sarah Connor",
+  "email": "sarah@cyberdyne.com",
+  "password": "Password123!"
+}
+```
+
+### 2. User Login (`POST /api/auth/login`)
+Authenticates user credentials and sets `access_token` and `refresh_token` HTTP cookies.
+```json
+// Request Body
+{
+  "email": "admin@acme.com",
+  "password": "Password123!"
+}
+```
+
+### 3. Authenticated Session (`GET /api/auth/me`)
+Protected route returning user profile, tenant organization details, and role permissions.
+
+### 4. Password Reset Flow
+- `POST /api/auth/forgot-password`: Generates reset token (valid 1 hour) and logs simulated URL to dev console.
+- `POST /api/auth/reset-password`: Accepts token + `newPassword` and updates credentials.
+
+---
+
+## 🛡️ Role-Based Access Control (RBAC) Matrix
+
+| Permission | SuperAdmin | OrgAdmin | ProjectManager | TeamMember |
+|---|:---:|:---:|:---:|:---:|
+| `ORG_MANAGE` | ✅ | ✅ | ❌ | ❌ |
+| `USER_INVITE` | ✅ | ✅ | ❌ | ❌ |
+| `USER_MANAGE` | ✅ | ✅ | ❌ | ❌ |
+| `PROJECT_CREATE` | ✅ | ✅ | ❌ | ❌ |
+| `PROJECT_READ` | ✅ | ✅ | ✅ | ✅ |
+| `PROJECT_UPDATE` | ✅ | ✅ | ✅ | ❌ |
+| `PROJECT_DELETE` | ✅ | ✅ | ❌ | ❌ |
+| `TASK_CREATE` | ✅ | ✅ | ✅ | ❌ |
+| `TASK_READ` | ✅ | ✅ | ✅ | ✅ |
+| `TASK_UPDATE` | ✅ | ✅ | ✅ | ✅ |
+| `TEAM_MANAGE` | ✅ | ✅ | ✅ | ❌ |
+
+---
+
+## 🔒 Multi-Tenant Data Isolation Enforcement
+
+Database queries across all endpoints enforce isolation using `withTenant(query, authUser.orgId)`:
 
 ```typescript
+import { requirePermission } from '@/lib/rbac';
 import { withTenant } from '@/lib/tenantScoping';
-import { Task } from '@/models/Task';
+import { Project } from '@/models/Project';
 
-// Ensures queries strictly match the authenticated tenant's organization ID
-const tenantTasks = await Task.find(
-  withTenant({ status: 'IN_PROGRESS' }, currentOrgId)
-);
-```
+export async function GET(req: Request) {
+  // 1. Enforce RBAC permission
+  const authResult = await requirePermission(req, 'PROJECT_READ');
+  if (authResult.error) return authResult.error;
 
-### 2. Singleton Connection Caching
-In serverless runtime environments (such as Next.js API route handlers), creating new Mongoose connections per request can exhaust connection pools. `lib/db.ts` uses global caching to re-use connection promises across invocations.
+  const { user } = authResult;
 
-### 3. Edge Middleware Tenant Resolution
-`middleware.ts` intercepts requests matching `/api/*` and extracts tenant identifiers (`x-org-id`), setting request context for downstream route processing.
-
-### 4. Mongoose Database Models
-The project implements 7 models with explicit compound indexing (`{ orgId: 1, ... }`) for query speed and data boundary enforcement:
-- **`Organization`**: Tenant identity, subscription plan, and owner link.
-- **`User`**: User profile, global/tenant role (`SuperAdmin`, `OrgAdmin`, `ProjectManager`, `TeamMember`).
-- **`Project`**: Organization projects with budget, timeline, and status.
-- **`Task`**: Sprint/project task items with priority, assignment, and status transitions.
-- **`Team`**: Sub-groupings within organizations.
-- **`Notification`**: In-app user notifications.
-- **`AuditLog`**: Compliance trail tracking security & system actions.
-
----
-
-## 🚀 Local Setup & Installation Guide
-
-Follow these steps to configure and launch the application locally:
-
-### 1. Prerequisites
-Ensure Node.js (v18+) and npm are installed.
-
-### 2. Install Project Dependencies
-Navigate into the `week1/day2` folder and run:
-```bash
-npm install
-```
-
-### 3. Environment Configuration
-Copy the template `.env.example` file to `.env.local`:
-```bash
-cp .env.example .env.local
-```
-
-Open `.env.local` and populate your local MongoDB Atlas connection string:
-```env
-# MongoDB Atlas Connection URI
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/multi_tenant_pm?retryWrites=true&w=majority
-
-# App Configuration
-PORT=3000
-NODE_ENV=development
-JWT_SECRET=super-secret-jwt-key-change-in-production-32-chars
-```
-
-> [!IMPORTANT]
-> **Security Notice:** Never commit `.env` or `.env.local` to Git. Ensure `.env.local` remains listed inside `.gitignore`.
-
----
-
-## 🌱 Database Seeding Engine
-
-To populate your database with initial tenant data, roles, users, projects, and tasks:
-
-```bash
-npm run seed
-```
-
-**Seeded Test Accounts (Default Password for all: `Password123!`):**
-- **Super Admin:** `superadmin@system.com`
-- **Acme Corp Admin:** `admin@acme.com`
-- **Acme Corp Project Manager:** `pm@acme.com`
-- **Acme Corp Member:** `member@acme.com`
-- **Stark Industries Admin:** `admin@stark.com`
-
----
-
-## 🔍 Health Check & Endpoint Verification
-
-Start the local Next.js development server:
-```bash
-npm run dev
-```
-
-Test the health check endpoint to confirm active MongoDB Atlas connection:
-
-- **Browser URL:** `http://localhost:3000/api/health`
-- **cURL Request:**
-  ```bash
-  curl http://localhost:3000/api/health
-  ```
-
-**Sample Response:**
-```json
-{
-  "status": "ok",
-  "timestamp": "2026-09-02T00:50:00.000Z",
-  "environment": "development",
-  "latencyMs": 42,
-  "database": {
-    "status": "connected",
-    "readyState": 1,
-    "host": "cluster0.mongodb.net",
-    "name": "multi_tenant_pm"
-  },
-  "services": {
-    "multiTenancyScoping": "active",
-    "rbacGuard": "initialized"
-  }
+  // 2. Query strictly scoped to authenticated tenant's orgId
+  const projects = await Project.find(withTenant({}, user.orgId));
+  return NextResponse.json({ projects });
 }
 ```
 
 ---
 
-## 🛡️ Security & Environment Best Practices
+## 🚀 Local Setup & Installation Guide
 
-1. **Keep Secrets Out of Source Control:** Store secrets only in `.env.local`.
-2. **Revoke Exposed Credentials Immediately:** If a URI or password is accidentally committed or pushed, revoke the database user in MongoDB Atlas right away.
-3. **Validate Schemas:** Use `withTenant` on every query to enforce isolation.
+1. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Environment Configuration (`.env.local`):**
+   ```env
+   MONGODB_URI=mongodb+srv://<user>:<password>@cluster0.mongodb.net/multi_tenant_pm?retryWrites=true&w=majority
+   PORT=3000
+   NODE_ENV=development
+   JWT_SECRET=super-secret-jwt-key-change-in-production-32-chars
+   ```
+
+3. **Seed Database:**
+   ```bash
+   npm run seed
+   ```
+
+4. **Run Dev Server:**
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## 🧪 Automated Integration Testing
+
+Run the automated auth and RBAC integration test suite:
+
+```bash
+npm run test:auth
+```
+
+**Test Output Verification:**
+```
+==================================================
+🧪 DAY 3: MULTI-TENANT AUTH & RBAC INTEGRATION TESTS
+==================================================
+
+Successfully connected to MongoDB Atlas
+Connected to database successfully.
+
+--- TEST SUITE 1: Password Security & Hashing ---
+  ✅ PASS: Password is properly hashed with bcrypt
+  ✅ PASS: Correct password verifies successfully
+  ✅ PASS: Incorrect password fails verification
+
+--- TEST SUITE 2: JWT Issuance & Payload Claims ---
+  ✅ PASS: JWT Access Token generated
+  ✅ PASS: JWT Token signature verified successfully
+  ✅ PASS: JWT Payload contains correct userId
+  ✅ PASS: JWT Payload contains correct orgId
+  ✅ PASS: JWT Payload contains correct role
+
+--- TEST SUITE 3: RBAC Role & Permission Enforcer ---
+  ✅ PASS: OrgAdmin possesses USER_MANAGE permission
+  ✅ PASS: OrgAdmin possesses PROJECT_CREATE permission
+  ✅ PASS: TeamMember is DENIED USER_MANAGE permission
+  ✅ PASS: TeamMember is DENIED PROJECT_DELETE permission
+  ✅ PASS: TeamMember possesses TASK_READ permission
+
+--- TEST SUITE 4: Tenant Data Isolation ---
+  ✅ PASS: Query A scoped exclusively to Tenant Org A
+  ✅ PASS: Query B scoped exclusively to Tenant Org B
+  ✅ PASS: Tenant Org A cannot match Tenant Org B context
+
+--- TEST SUITE 5: Signup & Tenant Bootstrapping ---
+  ✅ PASS: New Organization created successfully
+  ✅ PASS: New User linked to correct Organization orgId
+  ✅ PASS: New Tenant Creator assigned OrgAdmin role
+
+--- TEST SUITE 6: User Authentication & Login ---
+  ✅ PASS: User found in database by email
+  ✅ PASS: User credential login verification passed
+
+==================================================
+RESULTS: 21 PASSED, 0 FAILED
+==================================================
+```
 
 ---
 
 ## 📌 Roadmap & Next Steps
 
-- **Day 3:** Authentication (JWT / NextAuth) & User Session Management.
-- **Day 4:** Organization & User Invitation API endpoints with RBAC checks.
-- **Day 5:** Project & Task Management API endpoints with full CRUD and audit logging.
+- **Day 4:** Organization & User Invitation API endpoints with RBAC enforcement and invitation tokens.
+- **Day 5:** Project & Task Management API endpoints with full CRUD, comment threads, and audit logging.
