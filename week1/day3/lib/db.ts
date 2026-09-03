@@ -1,12 +1,4 @@
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import path from 'path';
-
-// Ensure environment variables are loaded in non-Next runtime scripts
-if (!process.env.MONGODB_URI) {
-  dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
-  dotenv.config({ path: path.resolve(process.cwd(), '.env.example') });
-}
 
 interface MongooseCache {
   conn: typeof mongoose | null;
