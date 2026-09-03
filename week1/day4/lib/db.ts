@@ -1,4 +1,11 @@
 import mongoose from 'mongoose';
+import '@/models/Organization';
+import '@/models/User';
+import '@/models/Project';
+import '@/models/Team';
+import '@/models/Task';
+import '@/models/AuditLog';
+import '@/models/Notification';
 
 interface MongooseCache {
   conn: typeof mongoose | null;

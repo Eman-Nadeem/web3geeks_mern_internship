@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { Types } from 'mongoose';
 import connectToDatabase from '@/lib/db';
 import Project from '@/models/Project';
 import Task from '@/models/Task';
@@ -26,6 +27,13 @@ export async function GET(
 
   const { user } = authResult;
   const { id } = await params;
+
+  if (!Types.ObjectId.isValid(id)) {
+    return NextResponse.json(
+      { error: 'INVALID_ID', message: 'Project ID must be a valid 24-character MongoDB hex string' },
+      { status: 400 }
+    );
+  }
 
   try {
     await connectToDatabase();
@@ -59,6 +67,13 @@ export async function PATCH(
 
   const { user } = authResult;
   const { id } = await params;
+
+  if (!Types.ObjectId.isValid(id)) {
+    return NextResponse.json(
+      { error: 'INVALID_ID', message: 'Project ID must be a valid 24-character MongoDB hex string' },
+      { status: 400 }
+    );
+  }
 
   try {
     const body = await req.json();
@@ -128,6 +143,13 @@ export async function DELETE(
   const { id } = await params;
   const { searchParams } = new URL(req.url);
   const force = searchParams.get('force') === 'true';
+
+  if (!Types.ObjectId.isValid(id)) {
+    return NextResponse.json(
+      { error: 'INVALID_ID', message: 'Project ID must be a valid 24-character MongoDB hex string' },
+      { status: 400 }
+    );
+  }
 
   try {
     await connectToDatabase();
