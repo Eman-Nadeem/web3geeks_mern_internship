@@ -60,8 +60,8 @@ export async function GET(req: Request) {
         .skip(skip)
         .limit(limit)
         .populate('projectId', 'name status')
-        .populate('assigneeId', 'name email role')
-        .populate('reporterId', 'name email role'),
+        .populate('assigneeId', 'fullName email role')
+        .populate('reporterId', 'fullName email role'),
       Task.countDocuments(tenantFilter),
     ]);
 

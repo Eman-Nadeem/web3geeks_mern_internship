@@ -39,7 +39,7 @@ export async function GET(
     await connectToDatabase();
 
     const project = await Project.findOne(withTenant({ _id: id }, user.orgId))
-      .populate('managerId', 'name email role')
+      .populate('managerId', 'fullName email role')
       .populate('teamId', 'name description');
 
     if (!project) {

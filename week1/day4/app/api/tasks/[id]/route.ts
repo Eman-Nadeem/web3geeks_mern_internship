@@ -40,8 +40,8 @@ export async function GET(
 
     const task = await Task.findOne(withTenant({ _id: id }, user.orgId))
       .populate('projectId', 'name status')
-      .populate('assigneeId', 'name email role')
-      .populate('reporterId', 'name email role');
+      .populate('assigneeId', 'fullName email role')
+      .populate('reporterId', 'fullName email role');
 
     if (!task) {
       return NextResponse.json(
