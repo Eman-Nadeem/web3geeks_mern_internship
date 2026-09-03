@@ -9,6 +9,7 @@ function getJwtSecret() {
 
 const PUBLIC_API_PATHS = [
   '/api/health',
+  '/api/docs',
   '/api/auth/login',
   '/api/auth/signup',
   '/api/auth/refresh',
