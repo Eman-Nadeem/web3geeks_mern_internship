@@ -18,88 +18,100 @@ const PUBLIC_API_PATHS = [
 ];
 
 /**
- * Next.js Edge Middleware for JWT Authentication & Secure Tenant Context Resolution.
- * Extracts JWT token from httpOnly cookie or Authorization header, verifies signature,
- * and sets immutable tenant context (`x-tenant-id`, `x-user-id`, `x-user-role`) for downstream handlers.
+ * Attaches standard CORS headers to responses for local development & cross-origin clients.
+ */
+function applyCorsHeaders(response: NextResponse, requestOrigin?: string | null): NextResponse {
+  const origin = requestOrigin || '*';
+  response.headers.set('Access-Control-Allow-Origin', origin);
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  response.headers.set(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, X-Requested-With, x-tenant-id, x-user-id, x-user-role, x-user-email'
+  );
+  response.headers.set('Access-Control-Allow-Credentials', 'true');
+  response.headers.set('Access-Control-Max-Age', '86400');
+  return response;
+}
+
+/**
+ * Next.js Edge Middleware for CORS, JWT Authentication & Secure Tenant Context Resolution.
  */
 export async function middleware(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const pathname = request.nextUrl.pathname;
+
+  // 1. Handle Preflight CORS OPTIONS requests
+  if (request.method === 'OPTIONS') {
+    const preflightResponse = new NextResponse(null, { status: 204 });
+    return applyCorsHeaders(preflightResponse, origin);
+  }
+
   try {
-    const pathname = request.nextUrl.pathname;
-
-    // Allow public API endpoints to bypass auth checks
-    if (PUBLIC_API_PATHS.some((path) => pathname.startsWith(path))) {
-      return NextResponse.next();
-    }
-
-    // Allow non-API assets and public pages
+    // 2. Allow non-API assets and public pages
     if (!pathname.startsWith('/api')) {
       return NextResponse.next();
     }
 
+    // 3. Allow public API endpoints to bypass auth checks
+    if (PUBLIC_API_PATHS.some((path) => pathname.startsWith(path))) {
+      const publicResponse = NextResponse.next();
+      return applyCorsHeaders(publicResponse, origin);
+    }
+
     let token: string | undefined;
 
-    // 1. Try Authorization header
+    // Extract Authorization header token
     const authHeader = request.headers.get('authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7);
     }
 
-    // 2. Try httpOnly access_token cookie
+    // Extract httpOnly access_token cookie
     if (!token) {
       token = request.cookies.get('access_token')?.value;
     }
 
-    // If missing token on protected API route, return 401 Unauthorized
+    // Missing token check
     if (!token) {
-      if (pathname.startsWith('/api/')) {
-        return NextResponse.json(
-          { error: 'UNAUTHORIZED', message: 'Authentication required. Please log in.' },
-          { status: 401 }
-        );
-      }
-      return NextResponse.redirect(new URL('/login', request.url));
+      const unauthorizedResponse = NextResponse.json(
+        { error: 'UNAUTHORIZED', message: 'Authentication required. Please log in.' },
+        { status: 401 }
+      );
+      return applyCorsHeaders(unauthorizedResponse, origin);
     }
 
     // Verify JWT token signature and expiration
     const { payload } = await jwtVerify(token, getJwtSecret());
 
-    // Prevent token type mismatch (e.g. using a refresh token as an access token)
     if (payload.tokenType && payload.tokenType !== 'access') {
-      return NextResponse.json(
+      const tokenMismatchResponse = NextResponse.json(
         { error: 'UNAUTHORIZED', message: 'Invalid token type provided.' },
         { status: 401 }
       );
+      return applyCorsHeaders(tokenMismatchResponse, origin);
     }
 
     const requestHeaders = new Headers(request.headers);
 
-    // Secure Tenant Isolation: MUST set orgId from verified token payload (NEVER trust client input)
-    if (payload.orgId) {
-      requestHeaders.set('x-tenant-id', String(payload.orgId));
-    }
-    if (payload.userId) {
-      requestHeaders.set('x-user-id', String(payload.userId));
-    }
-    if (payload.role) {
-      requestHeaders.set('x-user-role', String(payload.role));
-    }
-    if (payload.email) {
-      requestHeaders.set('x-user-email', String(payload.email));
-    }
+    // Set Tenant Isolation context headers
+    if (payload.orgId) requestHeaders.set('x-tenant-id', String(payload.orgId));
+    if (payload.userId) requestHeaders.set('x-user-id', String(payload.userId));
+    if (payload.role) requestHeaders.set('x-user-role', String(payload.role));
+    if (payload.email) requestHeaders.set('x-user-email', String(payload.email));
 
-    return NextResponse.next({
+    const nextResponse = NextResponse.next({
       request: {
         headers: requestHeaders,
       },
     });
+
+    return applyCorsHeaders(nextResponse, origin);
   } catch (error) {
-    if (request.nextUrl.pathname.startsWith('/api/')) {
-      return NextResponse.json(
-        { error: 'UNAUTHORIZED', message: 'Session expired or token verification failed.' },
-        { status: 401 }
-      );
-    }
-    return NextResponse.redirect(new URL('/login', request.url));
+    const errorResponse = NextResponse.json(
+      { error: 'UNAUTHORIZED', message: 'Session expired or token verification failed.' },
+      { status: 401 }
+    );
+    return applyCorsHeaders(errorResponse, origin);
   }
 }
 

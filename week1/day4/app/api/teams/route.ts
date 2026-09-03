@@ -44,8 +44,8 @@ export async function GET(req: Request) {
         .sort({ name: 1 })
         .skip(skip)
         .limit(limit)
-        .populate('leaderId', 'name email role')
-        .populate('memberIds', 'name email role'),
+        .populate('leaderId', 'fullName email role')
+        .populate('memberIds', 'fullName email role'),
       Team.countDocuments(tenantFilter),
     ]);
 

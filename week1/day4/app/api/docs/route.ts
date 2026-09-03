@@ -173,6 +173,21 @@ export async function GET() {
         patch: {
           summary: 'Update Team',
           parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string', example: 'Frontend Guild Updated' },
+                    description: { type: 'string', example: 'Updated team description' },
+                    leaderId: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
           responses: { 200: { description: 'Team updated' } },
         },
         delete: {

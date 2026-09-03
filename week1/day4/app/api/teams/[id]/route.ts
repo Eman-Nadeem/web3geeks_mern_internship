@@ -27,8 +27,8 @@ export async function GET(
     await connectToDatabase();
 
     const team = await Team.findOne(withTenant({ _id: id }, user.orgId))
-      .populate('leaderId', 'name email role')
-      .populate('memberIds', 'name email role');
+      .populate('leaderId', 'fullName email role')
+      .populate('memberIds', 'fullName email role');
 
     if (!team) {
       return NextResponse.json(

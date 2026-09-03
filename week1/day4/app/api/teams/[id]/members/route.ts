@@ -54,8 +54,19 @@ export async function POST(
       );
     }
 
-    team.memberIds.push(targetUser._id);
-    await team.save();
+    // Atomic update using $addToSet to persist in DB and return populated document
+    const updatedTeam = await Team.findOneAndUpdate(
+      withTenant({ _id: id }, user.orgId),
+      { $addToSet: { memberIds: targetUser._id } },
+      { new: true }
+    ).populate('memberIds', 'fullName email role');
+
+    if (!updatedTeam) {
+      return NextResponse.json(
+        { error: 'NOT_FOUND', message: 'Team not found' },
+        { status: 404 }
+      );
+    }
 
     // Audit Log & Notification Stub
     await createAuditLog({
@@ -64,21 +75,21 @@ export async function POST(
       action: 'MEMBER_ADDED_TO_TEAM',
       entityType: 'Team',
       entityId: id,
-      details: { teamName: team.name, addedUserId: userId },
+      details: { teamName: updatedTeam.name, addedUserId: userId },
     });
 
     await createNotificationStub({
       orgId: user.orgId,
       userId: userId,
       title: 'Added to Team',
-      message: `You were added to the team "${team.name}"`,
+      message: `You were added to the team "${updatedTeam.name}"`,
       type: 'TEAM_ADDED',
       linkUrl: `/teams/${id}`,
     });
 
     return NextResponse.json({
       message: 'Member added to team successfully',
-      team,
+      team: updatedTeam,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -117,16 +128,18 @@ export async function DELETE(
   try {
     await connectToDatabase();
 
-    const team = await Team.findOne(withTenant({ _id: id }, user.orgId));
-    if (!team) {
+    const updatedTeam = await Team.findOneAndUpdate(
+      withTenant({ _id: id }, user.orgId),
+      { $pull: { memberIds: userId } },
+      { new: true }
+    ).populate('memberIds', 'fullName email role');
+
+    if (!updatedTeam) {
       return NextResponse.json(
         { error: 'NOT_FOUND', message: 'Team not found' },
         { status: 404 }
       );
     }
-
-    team.memberIds = team.memberIds.filter((mId) => mId.toString() !== userId);
-    await team.save();
 
     // Audit Log
     await createAuditLog({
@@ -135,12 +148,12 @@ export async function DELETE(
       action: 'MEMBER_REMOVED_FROM_TEAM',
       entityType: 'Team',
       entityId: id,
-      details: { teamName: team.name, removedUserId: userId },
+      details: { teamName: updatedTeam.name, removedUserId: userId },
     });
 
     return NextResponse.json({
       message: 'Member removed from team successfully',
-      team,
+      team: updatedTeam,
     });
   } catch (error: any) {
     return NextResponse.json(
