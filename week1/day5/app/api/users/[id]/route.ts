@@ -60,8 +60,8 @@ export async function PATCH(
       );
     }
 
-    if (targetUser.role === 'OrgAdmin' || targetUser.role === 'SuperAdmin') {
-      if (role && role !== targetUser.role && currentUser.role !== 'SuperAdmin') {
+    if ((targetUser.role === 'OrgAdmin' || targetUser.role === 'SuperAdmin') && role) {
+      if (currentUser.role !== 'SuperAdmin') {
         return NextResponse.json(
           { error: 'FORBIDDEN', message: 'Cannot alter role of Organization Admin' },
           { status: 403 }
