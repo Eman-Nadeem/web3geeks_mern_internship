@@ -3,6 +3,7 @@ import { z } from 'zod';
 import connectToDatabase from '@/lib/db';
 import Team from '@/models/Team';
 import User from '@/models/User';
+import Project from '@/models/Project';
 import { requirePermission } from '@/lib/rbac';
 import { withTenant } from '@/lib/tenantScoping';
 import { createAuditLog } from '@/lib/audit';
@@ -17,7 +18,7 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authResult = await requirePermission(req, 'TEAM_MANAGE');
+  const authResult = await requirePermission(req, 'TEAM_READ');
   if (authResult.error) return authResult.error;
 
   const { user } = authResult;
@@ -124,6 +125,8 @@ export async function DELETE(
 
   const { user } = authResult;
   const { id } = await params;
+  const { searchParams } = new URL(req.url);
+  const force = searchParams.get('force') === 'true';
 
   try {
     await connectToDatabase();
@@ -133,6 +136,19 @@ export async function DELETE(
       return NextResponse.json(
         { error: 'NOT_FOUND', message: 'Team not found' },
         { status: 404 }
+      );
+    }
+
+    // Safety check: Check if any project is associated with this team
+    const projectCount = await Project.countDocuments(withTenant({ teamId: id }, user.orgId));
+    if (projectCount > 0 && !force) {
+      return NextResponse.json(
+        {
+          error: 'BUSINESS_RULE_VIOLATION',
+          message: `Cannot delete team because it is assigned to ${projectCount} project(s). Pass force=true parameter to delete anyway or reassign projects.`,
+          associatedProjectsCount: projectCount,
+        },
+        { status: 400 }
       );
     }
 

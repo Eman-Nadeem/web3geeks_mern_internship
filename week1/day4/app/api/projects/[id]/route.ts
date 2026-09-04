@@ -4,6 +4,8 @@ import { Types } from 'mongoose';
 import connectToDatabase from '@/lib/db';
 import Project from '@/models/Project';
 import Task from '@/models/Task';
+import User from '@/models/User';
+import Team from '@/models/Team';
 import { requirePermission } from '@/lib/rbac';
 import { withTenant } from '@/lib/tenantScoping';
 import { createAuditLog } from '@/lib/audit';
@@ -87,6 +89,26 @@ export async function PATCH(
         { error: 'NOT_FOUND', message: 'Project not found' },
         { status: 404 }
       );
+    }
+
+    if (validatedData.managerId) {
+      const managerUser = await User.findOne(withTenant({ _id: validatedData.managerId }, user.orgId));
+      if (!managerUser) {
+        return NextResponse.json(
+          { error: 'INVALID_MANAGER', message: 'Project manager must belong to your organization' },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (validatedData.teamId) {
+      const team = await Team.findOne(withTenant({ _id: validatedData.teamId }, user.orgId));
+      if (!team) {
+        return NextResponse.json(
+          { error: 'INVALID_TEAM', message: 'Assigned team must belong to your organization' },
+          { status: 400 }
+        );
+      }
     }
 
     const updatePayload: Record<string, any> = { ...validatedData };
@@ -181,7 +203,9 @@ export async function DELETE(
       );
     }
 
+    // Perform project deletion and cleanup associated tasks
     await Project.deleteOne(withTenant({ _id: id }, user.orgId));
+    await Task.deleteMany(withTenant({ projectId: id }, user.orgId));
 
     // Record Audit Log
     await createAuditLog({

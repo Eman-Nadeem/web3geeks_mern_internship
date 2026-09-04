@@ -15,7 +15,7 @@ const CreateTeamSchema = z.object({
 });
 
 export async function GET(req: Request) {
-  const authResult = await requirePermission(req, 'TEAM_MANAGE');
+  const authResult = await requirePermission(req, 'TEAM_READ');
   if (authResult.error) return authResult.error;
 
   const { user } = authResult;

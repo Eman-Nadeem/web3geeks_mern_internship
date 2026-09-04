@@ -3,9 +3,18 @@ import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'super-secret-jwt-key-change-in-production-32-chars'
-);
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET environment variable is missing in production!');
+    }
+    return 'super-secret-jwt-key-change-in-production-32-chars';
+  }
+  return secret;
+};
+
+const JWT_SECRET = new TextEncoder().encode(getJwtSecret());
 
 export interface JWTPayload {
   userId: string;

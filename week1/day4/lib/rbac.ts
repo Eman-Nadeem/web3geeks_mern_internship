@@ -15,6 +15,7 @@ export type Permission =
   | 'TASK_READ'
   | 'TASK_UPDATE'
   | 'TASK_DELETE'
+  | 'TEAM_READ'
   | 'TEAM_MANAGE';
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
@@ -30,6 +31,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'TASK_READ',
     'TASK_UPDATE',
     'TASK_DELETE',
+    'TEAM_READ',
     'TEAM_MANAGE',
   ],
   OrgAdmin: [
@@ -44,6 +46,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'TASK_READ',
     'TASK_UPDATE',
     'TASK_DELETE',
+    'TEAM_READ',
     'TEAM_MANAGE',
   ],
   ProjectManager: [
@@ -53,9 +56,10 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'TASK_READ',
     'TASK_UPDATE',
     'TASK_DELETE',
+    'TEAM_READ',
     'TEAM_MANAGE',
   ],
-  TeamMember: ['PROJECT_READ', 'TASK_READ', 'TASK_UPDATE'],
+  TeamMember: ['PROJECT_READ', 'TASK_READ', 'TASK_UPDATE', 'TEAM_READ'],
 };
 
 /**

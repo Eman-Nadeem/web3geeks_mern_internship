@@ -5,6 +5,7 @@ import Project from '@/models/Project';
 import { requirePermission } from '@/lib/rbac';
 import { withTenant } from '@/lib/tenantScoping';
 import { createAuditLog } from '@/lib/audit';
+import Team from '@/models/Team';
 
 const CreateProjectSchema = z.object({
   name: z.string().min(2, 'Project name must be at least 2 characters'),
@@ -84,6 +85,16 @@ export async function POST(req: Request) {
     const validatedData = CreateProjectSchema.parse(body);
 
     await connectToDatabase();
+
+    if (validatedData.teamId) {
+      const team = await Team.findOne(withTenant({ _id: validatedData.teamId }, user.orgId));
+      if (!team) {
+        return NextResponse.json(
+          { error: 'INVALID_TEAM', message: 'Team not found in your organization' },
+          { status: 400 }
+        );
+      }
+    }
 
     const project = await Project.create({
       ...validatedData,

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import connectToDatabase from '@/lib/db';
 import Task from '@/models/Task';
 import Project from '@/models/Project';
+import Team from '@/models/Team';
 import User from '@/models/User';
 import { requirePermission } from '@/lib/rbac';
 import { withTenant } from '@/lib/tenantScoping';
@@ -103,7 +104,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Business Rule Validation 2: Verify Assignee belongs to same organization
+    // Business Rule Validation 2: Verify Assignee belongs to same organization & team if project has team
     if (validatedData.assigneeId) {
       const assignee = await User.findOne(withTenant({ _id: validatedData.assigneeId }, user.orgId));
       if (!assignee) {
@@ -111,6 +112,20 @@ export async function POST(req: Request) {
           { error: 'INVALID_ASSIGNEE', message: 'Assignee user must belong to your organization' },
           { status: 400 }
         );
+      }
+
+      if (project.teamId) {
+        const team = await Team.findOne(withTenant({ _id: project.teamId }, user.orgId));
+        if (team) {
+          const isLeader = team.leaderId?.toString() === validatedData.assigneeId;
+          const isMember = team.memberIds.some((m: any) => m.toString() === validatedData.assigneeId);
+          if (!isLeader && !isMember) {
+            return NextResponse.json(
+              { error: 'INVALID_ASSIGNEE', message: 'Assignee user must belong to the team assigned to this project' },
+              { status: 400 }
+            );
+          }
+        }
       }
     }
 
