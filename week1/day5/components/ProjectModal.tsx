@@ -6,8 +6,9 @@ export interface ProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (projectData: any) => Promise<void>;
+  project?: any;
   initialProject?: any;
-  users: Array<{ _id: string; fullName: string; role: string }>;
+  users: Array<{ _id: string; fullName: string; role?: string }>;
   teams: Array<{ _id: string; name: string }>;
 }
 
@@ -15,10 +16,13 @@ export default function ProjectModal({
   isOpen,
   onClose,
   onSave,
+  project,
   initialProject,
   users,
   teams,
 }: ProjectModalProps) {
+  const activeProject = project || initialProject;
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('PLANNING');
@@ -30,28 +34,28 @@ export default function ProjectModal({
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    if (initialProject) {
-      setName(initialProject.name || '');
-      setDescription(initialProject.description || '');
-      setStatus(initialProject.status || 'PLANNING');
+    if (activeProject) {
+      setName(activeProject.name || '');
+      setDescription(activeProject.description || '');
+      setStatus(activeProject.status || 'PLANNING');
       setManagerId(
-        typeof initialProject.managerId === 'object'
-          ? initialProject.managerId?._id
-          : initialProject.managerId || (users[0]?._id ?? '')
+        typeof activeProject.managerId === 'object'
+          ? activeProject.managerId?._id
+          : activeProject.managerId || (users[0]?._id ?? '')
       );
       setTeamId(
-        typeof initialProject.teamId === 'object'
-          ? initialProject.teamId?._id
-          : initialProject.teamId || ''
+        typeof activeProject.teamId === 'object'
+          ? activeProject.teamId?._id
+          : activeProject.teamId || ''
       );
       setStartDate(
-        initialProject.startDate
-          ? new Date(initialProject.startDate).toISOString().split('T')[0]
+        activeProject.startDate
+          ? new Date(activeProject.startDate).toISOString().split('T')[0]
           : ''
       );
       setDueDate(
-        initialProject.dueDate
-          ? new Date(initialProject.dueDate).toISOString().split('T')[0]
+        activeProject.dueDate
+          ? new Date(activeProject.dueDate).toISOString().split('T')[0]
           : ''
       );
     } else {
@@ -64,7 +68,7 @@ export default function ProjectModal({
       setDueDate('');
     }
     setErrorMsg('');
-  }, [initialProject, isOpen, users]);
+  }, [activeProject, isOpen, users]);
 
   if (!isOpen) return null;
 
@@ -83,7 +87,7 @@ export default function ProjectModal({
       setIsSubmitting(true);
       setErrorMsg('');
       await onSave({
-        _id: initialProject?._id,
+        _id: activeProject?._id,
         name: name.trim(),
         description: description.trim(),
         status,
@@ -105,7 +109,7 @@ export default function ProjectModal({
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
           <h2 className="text-lg font-bold text-slate-900">
-            {initialProject ? 'Edit Project' : 'Create New Project'}
+            {activeProject ? 'Edit Project' : 'Create New Project'}
           </h2>
           <button
             onClick={onClose}
@@ -163,7 +167,7 @@ export default function ProjectModal({
                 <option value="">Select Manager</option>
                 {users.map((u) => (
                   <option key={u._id} value={u._id}>
-                    {u.fullName} ({u.role})
+                    {u.fullName} ({u.role || 'User'})
                   </option>
                 ))}
               </select>
@@ -232,7 +236,7 @@ export default function ProjectModal({
               disabled={isSubmitting}
               className="px-5 py-2 rounded-xl bg-[#FF6B2C] hover:bg-[#E0561B] text-white text-xs font-bold shadow-md shadow-[#FF6B2C]/20 transition-all disabled:opacity-50"
             >
-              {isSubmitting ? 'Saving...' : initialProject ? 'Update Project' : 'Create Project'}
+              {isSubmitting ? 'Saving...' : activeProject ? 'Update Project' : 'Create Project'}
             </button>
           </div>
         </form>

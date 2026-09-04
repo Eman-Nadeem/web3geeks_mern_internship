@@ -6,17 +6,21 @@ export interface TeamModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (teamData: any) => Promise<void>;
+  team?: any;
   initialTeam?: any;
-  users: Array<{ _id: string; fullName: string; role: string }>;
+  users: Array<{ _id: string; fullName: string; role?: string }>;
 }
 
 export default function TeamModal({
   isOpen,
   onClose,
   onSave,
+  team,
   initialTeam,
   users,
 }: TeamModalProps) {
+  const activeTeam = team || initialTeam;
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [leaderId, setLeaderId] = useState('');
@@ -24,13 +28,13 @@ export default function TeamModal({
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    if (initialTeam) {
-      setName(initialTeam.name || '');
-      setDescription(initialTeam.description || '');
+    if (activeTeam) {
+      setName(activeTeam.name || '');
+      setDescription(activeTeam.description || '');
       setLeaderId(
-        typeof initialTeam.leaderId === 'object'
-          ? initialTeam.leaderId?._id
-          : initialTeam.leaderId || (users[0]?._id ?? '')
+        typeof activeTeam.leaderId === 'object'
+          ? activeTeam.leaderId?._id
+          : activeTeam.leaderId || (users[0]?._id ?? '')
       );
     } else {
       setName('');
@@ -38,7 +42,7 @@ export default function TeamModal({
       setLeaderId(users[0]?._id || '');
     }
     setErrorMsg('');
-  }, [initialTeam, isOpen, users]);
+  }, [activeTeam, isOpen, users]);
 
   if (!isOpen) return null;
 
@@ -57,7 +61,7 @@ export default function TeamModal({
       setIsSubmitting(true);
       setErrorMsg('');
       await onSave({
-        _id: initialTeam?._id,
+        _id: activeTeam?._id,
         name: name.trim(),
         description: description.trim(),
         leaderId,
@@ -75,7 +79,7 @@ export default function TeamModal({
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
           <h2 className="text-lg font-bold text-slate-900">
-            {initialTeam ? 'Edit Team' : 'Create New Team'}
+            {activeTeam ? 'Edit Team' : 'Create New Team'}
           </h2>
           <button
             onClick={onClose}
@@ -132,7 +136,7 @@ export default function TeamModal({
               <option value="">Select Leader</option>
               {users.map((u) => (
                 <option key={u._id} value={u._id}>
-                  {u.fullName} ({u.role})
+                  {u.fullName} ({u.role || 'User'})
                 </option>
               ))}
             </select>
@@ -151,7 +155,7 @@ export default function TeamModal({
               disabled={isSubmitting}
               className="px-5 py-2 rounded-xl bg-[#FF6B2C] hover:bg-[#E0561B] text-white text-xs font-bold shadow-md shadow-[#FF6B2C]/20 transition-all disabled:opacity-50"
             >
-              {isSubmitting ? 'Saving...' : initialTeam ? 'Update Team' : 'Create Team'}
+              {isSubmitting ? 'Saving...' : activeTeam ? 'Update Team' : 'Create Team'}
             </button>
           </div>
         </form>

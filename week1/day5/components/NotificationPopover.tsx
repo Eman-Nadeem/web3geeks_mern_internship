@@ -10,7 +10,8 @@ export interface NotificationPopoverProps {
     title: string;
     message: string;
     type: string;
-    read: boolean;
+    isRead?: boolean;
+    read?: boolean;
     createdAt: string;
   }>;
   onMarkAsRead: (id: string) => void;
@@ -42,29 +43,32 @@ export default function NotificationPopover({
             No notifications found
           </div>
         ) : (
-          notifications.map((n) => (
-            <div
-              key={n._id}
-              className={`p-3.5 hover:bg-slate-50 transition-colors flex items-start justify-between gap-3 ${
-                !n.read ? 'bg-orange-50/40' : ''
-              }`}
-            >
-              <div className="space-y-1">
-                <p className="text-xs font-bold text-slate-900">{n.title}</p>
-                <p className="text-[11px] text-slate-600 leading-snug">{n.message}</p>
-                <span className="text-[10px] text-slate-400 block font-mono">
-                  {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+          notifications.map((n) => {
+            const unread = !(n.isRead ?? n.read ?? false);
+            return (
+              <div
+                key={n._id}
+                className={`p-3.5 hover:bg-slate-50 transition-colors flex items-start justify-between gap-3 ${
+                  unread ? 'bg-orange-50/40' : ''
+                }`}
+              >
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-slate-900">{n.title}</p>
+                  <p className="text-[11px] text-slate-600 leading-snug">{n.message}</p>
+                  <span className="text-[10px] text-slate-400 block font-mono">
+                    {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                {unread && (
+                  <button
+                    onClick={() => onMarkAsRead(n._id)}
+                    title="Mark as read"
+                    className="w-2 h-2 rounded-full bg-[#FF6B2C] shrink-0 mt-1 hover:scale-125 transition-transform"
+                  />
+                )}
               </div>
-              {!n.read && (
-                <button
-                  onClick={() => onMarkAsRead(n._id)}
-                  title="Mark as read"
-                  className="w-2 h-2 rounded-full bg-[#FF6B2C] shrink-0 mt-1 hover:scale-125 transition-transform"
-                />
-              )}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

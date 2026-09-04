@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
-import User from '@/models/User';
+import AuditLog from '@/models/AuditLog';
 import { requireAuth } from '@/lib/rbac';
 import { withTenant } from '@/lib/tenantScoping';
 
@@ -10,22 +10,30 @@ export async function GET(req: Request) {
 
   const { user } = authResult;
 
+  if (user.role !== 'SuperAdmin' && user.role !== 'OrgAdmin') {
+    return NextResponse.json(
+      { error: 'FORBIDDEN', message: 'You do not have permission to view audit logs' },
+      { status: 403 }
+    );
+  }
+
   try {
     await connectToDatabase();
 
     const filter = user.role === 'SuperAdmin' ? {} : withTenant({}, user.orgId);
 
-    const users = await User.find(filter)
-      .select('-passwordHash -refreshTokenHash -resetPasswordToken')
-      .sort({ createdAt: -1 });
+    const logs = await AuditLog.find(filter)
+      .populate('actorId', 'fullName email role')
+      .sort({ timestamp: -1 })
+      .limit(100);
 
     return NextResponse.json({
-      count: users.length,
-      users,
+      logs,
+      count: logs.length,
     });
   } catch (error: any) {
     return NextResponse.json(
-      { error: 'SERVER_ERROR', message: error.message || 'Failed to fetch users' },
+      { error: 'SERVER_ERROR', message: error.message || 'Failed to fetch audit logs' },
       { status: 500 }
     );
   }

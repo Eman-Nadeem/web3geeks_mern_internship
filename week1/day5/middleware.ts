@@ -15,6 +15,7 @@ const PUBLIC_API_PATHS = [
   '/api/auth/refresh',
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
+  '/api/auth/accept-invite',
 ];
 
 /**

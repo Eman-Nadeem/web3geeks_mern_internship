@@ -1,12 +1,14 @@
 'use client';
 
 import React from 'react';
+import { can } from '@/lib/permissions';
 
 export interface TopHeaderProps {
   title: string;
   viewMode: 'board' | 'list';
   userRole?: string;
   showViewToggle?: boolean;
+  showActionButtons?: boolean;
   onViewModeChange: (mode: 'board' | 'list') => void;
   onOpenNewTaskModal: () => void;
   onOpenNewProjectModal: () => void;
@@ -19,14 +21,15 @@ export default function TopHeader({
   viewMode,
   userRole,
   showViewToggle = true,
+  showActionButtons = true,
   onViewModeChange,
   onOpenNewTaskModal,
   onOpenNewProjectModal,
   unreadNotificationsCount,
   onToggleNotifications,
 }: TopHeaderProps) {
-  const canCreateProject = userRole === 'SuperAdmin' || userRole === 'OrgAdmin' || userRole === 'ProjectManager';
-  const canCreateTask = userRole === 'OrgAdmin' || userRole === 'ProjectManager';
+  const canCreateProject = can(userRole, 'CREATE_PROJECT');
+  const canCreateTask = can(userRole, 'CREATE_TASK');
 
   return (
     <header className="bg-white border-b border-slate-200/80 px-8 py-4 flex items-center justify-between sticky top-0 z-20 shadow-xs">
@@ -35,7 +38,7 @@ export default function TopHeader({
           {title}
         </h1>
 
-        {/* View Mode Toggle Pills (shown on tasks view) */}
+        {/* View Mode Toggle Pills */}
         {showViewToggle && (
           <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
@@ -69,7 +72,7 @@ export default function TopHeader({
         )}
       </div>
 
-      {/* Action Buttons (Restricted by RBAC Role) */}
+      {/* Action Buttons (Restricted strictly by RBAC Role) */}
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleNotifications}
@@ -86,22 +89,22 @@ export default function TopHeader({
           )}
         </button>
 
-        {canCreateProject && (
+        {showActionButtons && canCreateProject && (
           <button
             onClick={onOpenNewProjectModal}
-            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs transition-all border border-slate-200 flex items-center gap-1.5"
+            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs transition-all border border-slate-200 flex items-center gap-1.5 cursor-pointer"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
-            <span>Project</span>
+            <span>+ Project</span>
           </button>
         )}
 
-        {canCreateTask && (
+        {showActionButtons && canCreateTask && (
           <button
             onClick={onOpenNewTaskModal}
-            className="px-4 py-2 rounded-xl bg-[#FF6B2C] hover:bg-[#E0561B] text-white font-bold text-xs shadow-md shadow-[#FF6B2C]/20 transition-all flex items-center gap-1.5 transform active:scale-95"
+            className="px-4 py-2 rounded-xl bg-[#FF6B2C] hover:bg-[#E0561B] text-white font-bold text-xs shadow-md shadow-[#FF6B2C]/20 transition-all flex items-center gap-1.5 transform active:scale-95 cursor-pointer"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />

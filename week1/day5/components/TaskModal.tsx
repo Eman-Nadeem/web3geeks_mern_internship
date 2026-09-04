@@ -6,8 +6,10 @@ export interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (taskData: any) => Promise<void>;
+  task?: any;
   initialTask?: any;
   defaultStatus?: string;
+  selectedProjectId?: string | null;
   projects: Array<{ _id: string; name: string }>;
   users: Array<{ _id: string; fullName: string }>;
 }
@@ -16,11 +18,15 @@ export default function TaskModal({
   isOpen,
   onClose,
   onSave,
+  task,
   initialTask,
   defaultStatus = 'TO_DO',
+  selectedProjectId,
   projects,
   users,
 }: TaskModalProps) {
+  const activeTask = task || initialTask;
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('TO_DO');
@@ -32,24 +38,24 @@ export default function TaskModal({
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    if (initialTask) {
-      setTitle(initialTask.title || '');
-      setDescription(initialTask.description || '');
-      setStatus(initialTask.status || 'TO_DO');
-      setPriority(initialTask.priority || 'MEDIUM');
+    if (activeTask) {
+      setTitle(activeTask.title || '');
+      setDescription(activeTask.description || '');
+      setStatus(activeTask.status || 'TO_DO');
+      setPriority(activeTask.priority || 'MEDIUM');
       setProjectId(
-        typeof initialTask.projectId === 'object'
-          ? initialTask.projectId?._id
-          : initialTask.projectId || (projects[0]?._id ?? '')
+        typeof activeTask.projectId === 'object'
+          ? activeTask.projectId?._id
+          : activeTask.projectId || (projects[0]?._id ?? '')
       );
       setAssigneeId(
-        typeof initialTask.assigneeId === 'object'
-          ? initialTask.assigneeId?._id
-          : initialTask.assigneeId || ''
+        typeof activeTask.assigneeId === 'object'
+          ? activeTask.assigneeId?._id
+          : activeTask.assigneeId || ''
       );
       setDueDate(
-        initialTask.dueDate
-          ? new Date(initialTask.dueDate).toISOString().split('T')[0]
+        activeTask.dueDate
+          ? new Date(activeTask.dueDate).toISOString().split('T')[0]
           : ''
       );
     } else {
@@ -57,12 +63,12 @@ export default function TaskModal({
       setDescription('');
       setStatus(defaultStatus);
       setPriority('MEDIUM');
-      setProjectId(projects[0]?._id || '');
+      setProjectId(selectedProjectId || projects[0]?._id || '');
       setAssigneeId('');
       setDueDate('');
     }
     setErrorMsg('');
-  }, [initialTask, defaultStatus, isOpen, projects]);
+  }, [activeTask, defaultStatus, isOpen, projects, selectedProjectId]);
 
   if (!isOpen) return null;
 
@@ -81,7 +87,7 @@ export default function TaskModal({
       setIsSubmitting(true);
       setErrorMsg('');
       await onSave({
-        _id: initialTask?._id,
+        _id: activeTask?._id,
         title: title.trim(),
         description: description.trim(),
         status,
@@ -104,7 +110,7 @@ export default function TaskModal({
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
           <h2 className="text-lg font-bold text-slate-900">
-            {initialTask ? 'Edit Task' : 'Create New Task'}
+            {activeTask ? 'Edit Task' : 'Create New Task'}
           </h2>
           <button
             onClick={onClose}
@@ -248,7 +254,7 @@ export default function TaskModal({
               disabled={isSubmitting}
               className="px-5 py-2 rounded-xl bg-[#FF6B2C] hover:bg-[#E0561B] text-white text-xs font-bold shadow-md shadow-[#FF6B2C]/20 transition-all disabled:opacity-50"
             >
-              {isSubmitting ? 'Saving...' : initialTask ? 'Update Task' : 'Create Task'}
+              {isSubmitting ? 'Saving...' : activeTask ? 'Update Task' : 'Create Task'}
             </button>
           </div>
         </form>

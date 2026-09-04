@@ -43,7 +43,7 @@ async function seedDatabase() {
 
     // 1. Super Admin
     console.log('Creating Super Admin account...');
-    await User.create({
+    const superAdmin = await User.create({
       fullName: 'Global Super Admin',
       email: 'superadmin@system.com',
       passwordHash,
@@ -247,12 +247,51 @@ async function seedDatabase() {
       reporterId: starkPM._id,
     });
 
+    // 4. Notifications
+    console.log('Seeding Notification records...');
+    await Notification.create({
+      orgId: acmeOrg._id,
+      userId: superAdmin._id,
+      title: 'Welcome to System Portal',
+      message: 'Multi-Tenant SaaS System Portal initialized with active tenants.',
+      type: 'USER_INVITED',
+      isRead: false,
+    });
+
+    await Notification.create({
+      orgId: acmeOrg._id,
+      userId: superAdmin._id,
+      title: 'New Tenant Registered',
+      message: 'Stark Industries registered under Enterprise subscription tier.',
+      type: 'TEAM_ADDED',
+      isRead: false,
+    });
+
+    await Notification.create({
+      orgId: acmeOrg._id,
+      userId: acmeAdmin._id,
+      title: 'Project Initialized',
+      message: 'Acme SaaS Dashboard Redesign project was assigned to Frontend Guild.',
+      type: 'TASK_ASSIGNED',
+      isRead: false,
+    });
+
+    await Notification.create({
+      orgId: acmeOrg._id,
+      userId: acmeDev1._id,
+      title: 'Task Assigned',
+      message: 'You have been assigned: Design Dark Mode Wireframes.',
+      type: 'TASK_ASSIGNED',
+      isRead: false,
+    });
+
     console.log('\n==============================================');
     console.log('✅ EXPANDED SEEDING COMPLETED SUCCESSFULLY!');
     console.log('==============================================');
     console.log(`- Created 2 Organizations: Acme Corp, Stark Industries`);
     console.log(`- Created 8 Users (SuperAdmin, OrgAdmins, PMs, Developers)`);
     console.log(`- Created 3 Teams, 3 Projects, 4 Tasks across tenants`);
+    console.log(`- Created Seed Notifications for SuperAdmin and Users`);
     console.log(`- Login Password for all seeded users: Password123!`);
     console.log('==============================================\n');
   } catch (error) {

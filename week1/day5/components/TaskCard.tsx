@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { can } from '@/lib/permissions';
 
 export interface TaskCardProps {
   task: {
@@ -17,21 +18,39 @@ export interface TaskCardProps {
   users: Array<{ _id: string; fullName: string }>;
   projects: Array<{ _id: string; name: string }>;
   userRole?: string;
+  currentUserId?: string;
   onStatusChange: (taskId: string, newStatus: string) => void;
   onEditTask: (task: any) => void;
   onDeleteTask: (taskId: string) => void;
+  onSelectTaskDetail?: (task: any) => void;
 }
 
 export default function TaskCard({
   task,
   users,
   projects,
-  userRole = 'OrgAdmin',
+  userRole,
+  currentUserId,
   onStatusChange,
   onEditTask,
   onDeleteTask,
+  onSelectTaskDetail,
 }: TaskCardProps) {
-  const canEditOrDelete = userRole === 'SuperAdmin' || userRole === 'OrgAdmin' || userRole === 'ProjectManager';
+  const canEditOrDelete = can(userRole, 'EDIT_TASK_DETAILS');
+  const isTeamMember = userRole === 'TeamMember';
+
+  // Check if assigned to current user
+  const assigneeIdStr =
+    typeof task.assigneeId === 'object' && task.assigneeId?._id
+      ? task.assigneeId._id
+      : typeof task.assigneeId === 'string'
+      ? task.assigneeId
+      : '';
+
+  const isAssignedToCurrentUser = Boolean(currentUserId && assigneeIdStr === currentUserId);
+
+  // TeamMember permission check: can ONLY change status if assigned to current user. SuperAdmin is strictly read-only.
+  const canChangeStatus = userRole !== 'SuperAdmin' && (!isTeamMember || isAssignedToCurrentUser);
 
   // Helper for Priority Pills styling
   const getPriorityBadge = (priority: string) => {
@@ -75,10 +94,31 @@ export default function TaskCard({
     ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : null;
 
+  // State Machine allowed options
+  const getAllowedStatusOptions = () => {
+    const current = task.status;
+    if (!canChangeStatus) return [current];
+
+    if (isTeamMember) {
+      if (current === 'TO_DO') return ['TO_DO', 'IN_PROGRESS'];
+      if (current === 'IN_PROGRESS') return ['IN_PROGRESS', 'UNDER_REVIEW'];
+      return [current]; // Team members cannot approve UNDER_REVIEW or COMPLETED
+    }
+
+    // PM / OrgAdmin transition options
+    if (current === 'TO_DO') return ['TO_DO', 'IN_PROGRESS'];
+    if (current === 'IN_PROGRESS') return ['IN_PROGRESS', 'UNDER_REVIEW', 'COMPLETED', 'TO_DO'];
+    if (current === 'UNDER_REVIEW') return ['UNDER_REVIEW', 'COMPLETED', 'IN_PROGRESS'];
+    if (current === 'COMPLETED') return ['COMPLETED', 'IN_PROGRESS', 'TO_DO'];
+    return ['TO_DO', 'IN_PROGRESS', 'UNDER_REVIEW', 'COMPLETED'];
+  };
+
+  const allowedOptions = getAllowedStatusOptions();
+
   return (
     <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between space-y-3 w-full min-w-0 overflow-hidden">
       <div>
-        {/* Badges Bar: Priority & Project Name */}
+        {/* Priority Tag Pill & Project Badge */}
         <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide border shrink-0 ${getPriorityBadge(task.priority)}`}>
             {task.priority}
@@ -91,7 +131,12 @@ export default function TaskCard({
         </div>
 
         {/* Task Title */}
-        <h3 className="font-bold text-slate-900 text-sm leading-snug group-hover:text-[#FF6B2C] transition-colors line-clamp-2 break-words">
+        <h3
+          onClick={() => onSelectTaskDetail && onSelectTaskDetail(task)}
+          className={`font-bold text-slate-900 text-sm leading-snug group-hover:text-[#FF6B2C] transition-colors line-clamp-2 break-words ${
+            onSelectTaskDetail ? 'cursor-pointer hover:underline' : ''
+          }`}
+        >
           {task.title}
         </h3>
 
@@ -129,42 +174,60 @@ export default function TaskCard({
           </div>
         </div>
 
-        {/* Status Select & Quick Actions (RBAC Enforced) */}
+        {/* Status Dropdown & Action Buttons (RBAC Enforced) */}
         <div className="flex items-center justify-between gap-1 pt-1 min-w-0">
-          <select
-            value={task.status}
-            onChange={(e) => onStatusChange(task._id, e.target.value)}
-            className="text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg px-2 py-1 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-[#FF6B2C] shrink-0"
-          >
-            <option value="TO_DO">To Do</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="UNDER_REVIEW">Review</option>
-            <option value="COMPLETED">Complete</option>
-          </select>
-
-          {canEditOrDelete && (
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                onClick={() => onEditTask(task)}
-                title="Edit Task"
-                className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-              </button>
-
-              <button
-                onClick={() => onDeleteTask(task._id)}
-                title="Delete Task"
-                className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            </div>
+          {canChangeStatus ? (
+            <select
+              value={task.status}
+              onChange={(e) => onStatusChange(task._id, e.target.value)}
+              className="text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg px-2 py-1 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-[#FF6B2C] shrink-0 cursor-pointer"
+            >
+              {allowedOptions.includes('TO_DO') && <option value="TO_DO">To Do</option>}
+              {allowedOptions.includes('IN_PROGRESS') && <option value="IN_PROGRESS">In Progress</option>}
+              {allowedOptions.includes('UNDER_REVIEW') && <option value="UNDER_REVIEW">Review</option>}
+              {allowedOptions.includes('COMPLETED') && <option value="COMPLETED">Complete</option>}
+            </select>
+          ) : (
+            <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg border border-slate-200">
+              {task.status.replace('_', ' ')}
+            </span>
           )}
+
+          <div className="flex items-center gap-1 shrink-0">
+            {onSelectTaskDetail && (
+              <button
+                onClick={() => onSelectTaskDetail(task)}
+                title="View Task Details"
+                className="px-2 py-0.5 text-[10px] font-bold bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-md transition-colors"
+              >
+                Details
+              </button>
+            )}
+
+            {canEditOrDelete && (
+              <>
+                <button
+                  onClick={() => onEditTask(task)}
+                  title="Edit Task"
+                  className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+
+                <button
+                  onClick={() => onDeleteTask(task._id)}
+                  title="Delete Task"
+                  className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

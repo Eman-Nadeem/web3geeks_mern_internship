@@ -11,6 +11,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -20,7 +22,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       const data = await res.json();
@@ -87,14 +89,33 @@ export default function LoginPage() {
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#FF6B2C]"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-11 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#FF6B2C]"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                title={showPassword ? 'Hide Password' : 'Show Password'}
+              >
+                {showPassword ? (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a9.96 9.96 0 013.122-.063c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m-1.547 1.547L3 3l18 18" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
           <button
@@ -114,6 +135,14 @@ export default function LoginPage() {
           <div className="grid grid-cols-2 gap-2 text-[11px]">
             <button
               type="button"
+              onClick={() => prefillDemo('superadmin@system.com')}
+              className="p-2 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-900 font-medium text-left border border-purple-200 col-span-2"
+            >
+              <span className="font-bold text-purple-700 block">Super Admin</span>
+              <span>superadmin@system.com</span>
+            </button>
+            <button
+              type="button"
               onClick={() => prefillDemo('admin@acme.com')}
               className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-left border border-slate-200"
             >
@@ -122,11 +151,11 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => prefillDemo('manager@acme.com')}
+              onClick={() => prefillDemo('pm@acme.com')}
               className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-left border border-slate-200"
             >
               <span className="font-bold text-amber-600 block">Acme Manager</span>
-              <span>manager@acme.com</span>
+              <span>pm@acme.com</span>
             </button>
             <button
               type="button"

@@ -61,9 +61,8 @@ export async function POST(req: Request) {
       status: 'ACTIVE',
     });
 
-    // 5. Set Organization owner
-    organization.ownerId = user._id;
-    await organization.save();
+    // 5. Set Organization owner atomically
+    await Organization.findByIdAndUpdate(organization._id, { ownerId: user._id });
 
     // 6. Create Audit Log
     await AuditLog.create({

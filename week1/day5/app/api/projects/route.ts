@@ -45,14 +45,14 @@ export async function GET(req: Request) {
       ];
     }
 
-    const tenantFilter = withTenant(filter, user.orgId);
+    const tenantFilter = user.role === 'SuperAdmin' ? filter : withTenant(filter, user.orgId);
 
     const [projects, total] = await Promise.all([
       Project.find(tenantFilter)
         .sort({ [sortBy]: sortOrder })
         .skip(skip)
         .limit(limit)
-        .populate('managerId', 'name email role')
+        .populate('managerId', 'fullName email role')
         .populate('teamId', 'name'),
       Project.countDocuments(tenantFilter),
     ]);

@@ -53,7 +53,7 @@ export async function GET(req: Request) {
       ];
     }
 
-    const tenantFilter = withTenant(filter, user.orgId);
+    const tenantFilter = user.role === 'SuperAdmin' ? filter : withTenant(filter, user.orgId);
 
     const [tasks, total] = await Promise.all([
       Task.find(tenantFilter)

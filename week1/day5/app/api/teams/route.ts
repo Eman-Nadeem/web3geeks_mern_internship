@@ -11,7 +11,7 @@ const CreateTeamSchema = z.object({
   name: z.string().min(2, 'Team name must be at least 2 characters'),
   description: z.string().optional(),
   leaderId: z.string().optional(),
-  memberIds: z.array(z.string()).optional(),
+  memberIds: z.array(z.string()).optional().default([]),
 });
 
 export async function GET(req: Request) {
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
       ];
     }
 
-    const tenantFilter = withTenant(filter, user.orgId);
+    const tenantFilter = user.role === 'SuperAdmin' ? filter : withTenant(filter, user.orgId);
 
     const [teams, total] = await Promise.all([
       Team.find(tenantFilter)
@@ -79,41 +79,39 @@ export async function POST(req: Request) {
     await connectToDatabase();
 
     const leaderId = validatedData.leaderId || user.userId;
-
-    // Validate leader belongs to same org
-    const leaderUser = await User.findOne(withTenant({ _id: leaderId }, user.orgId));
-    if (!leaderUser) {
+    const leader = await User.findOne(withTenant({ _id: leaderId }, user.orgId));
+    if (!leader) {
       return NextResponse.json(
-        { error: 'INVALID_LEADER', message: 'Team leader must belong to the same organization' },
+        { error: 'INVALID_LEADER', message: 'Team leader must belong to your organization' },
         { status: 400 }
       );
     }
 
-    // Validate members belong to same org if provided
-    let validMemberIds: string[] = [];
-    if (validatedData.memberIds && validatedData.memberIds.length > 0) {
-      const orgUsers = await User.find(
+    if (validatedData.memberIds.length > 0) {
+      const validMembers = await User.find(
         withTenant({ _id: { $in: validatedData.memberIds } }, user.orgId)
       );
-      validMemberIds = orgUsers.map((u) => u._id.toString());
+      if (validMembers.length !== validatedData.memberIds.length) {
+        return NextResponse.json(
+          { error: 'INVALID_MEMBERS', message: 'One or more members do not belong to your organization' },
+          { status: 400 }
+        );
+      }
     }
 
     const team = await Team.create({
-      orgId: user.orgId,
-      name: validatedData.name,
-      description: validatedData.description || '',
+      ...validatedData,
       leaderId,
-      memberIds: validMemberIds,
+      orgId: user.orgId,
     });
 
-    // Audit Log
     await createAuditLog({
       orgId: user.orgId,
       actorId: user.userId,
       action: 'TEAM_CREATED',
       entityType: 'Team',
       entityId: team._id.toString(),
-      details: { name: team.name, memberCount: validMemberIds.length },
+      details: { name: team.name, leaderId: team.leaderId },
     });
 
     return NextResponse.json(

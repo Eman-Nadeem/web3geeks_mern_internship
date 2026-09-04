@@ -31,7 +31,9 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       user: {
+        _id: user._id.toString(),
         id: user._id.toString(),
+        orgId: user.orgId ? user.orgId.toString() : '',
         email: user.email,
         fullName: user.fullName,
         role: user.role,
