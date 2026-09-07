@@ -3,10 +3,12 @@ import crypto from 'crypto';
 import { z } from 'zod';
 import connectToDatabase from '@/lib/db';
 import User from '@/models/User';
+import Organization from '@/models/Organization';
 import { requirePermission } from '@/lib/rbac';
 import { withTenant } from '@/lib/tenantScoping';
 import { createAuditLog } from '@/lib/audit';
 import { createNotificationStub } from '@/lib/notifications';
+import { sendInviteEmail } from '@/lib/email';
 
 const inviteSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -35,6 +37,9 @@ export async function POST(req: Request) {
     const { email, role } = parsed.data;
 
     await connectToDatabase();
+
+    const org = await Organization.findById(currentUser.orgId);
+    const orgName = org?.name || 'Organization Workspace';
 
     // Check if user already exists in this organization
     const existingUser = await User.findOne(withTenant({ email: email.toLowerCase() }, currentUser.orgId));
@@ -87,12 +92,21 @@ export async function POST(req: Request) {
       orgId: currentUser.orgId,
       userId: targetUser._id,
       title: 'Organization Invitation',
-      message: `You have been invited to join the organization as ${role}.`,
+      message: `You have been invited to join ${orgName} as ${role}.`,
       type: 'USER_INVITED',
       linkUrl: `/accept-invite?token=${inviteToken}`,
     });
 
-    const inviteLink = `/accept-invite?token=${inviteToken}`;
+    const origin = req.headers.get('origin') || 'http://localhost:3000';
+    const fullInviteUrl = `${origin}/accept-invite?token=${inviteToken}`;
+
+    // Send invitation email via SMTP / Email transport
+    const emailResult = await sendInviteEmail({
+      toEmail: email,
+      orgName,
+      inviteLink: fullInviteUrl,
+      role,
+    });
 
     return NextResponse.json({
       success: true,
@@ -106,7 +120,9 @@ export async function POST(req: Request) {
         inviteExpiresAt: targetUser.inviteExpiresAt,
       },
       inviteToken,
-      inviteLink,
+      inviteLink: `/accept-invite?token=${inviteToken}`,
+      fullInviteUrl,
+      emailDelivered: emailResult.delivered,
     });
   } catch (error: any) {
     return NextResponse.json(
