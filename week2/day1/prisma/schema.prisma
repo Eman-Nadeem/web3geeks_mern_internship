@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String?
+  documents Document[]
+  createdAt DateTime   @default(now())
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  title       String   @default("Untitled Document")
+  content     String   // HTML string representation
+  jsonContent String?  // Optional JSON string representation (ProseMirror node)
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

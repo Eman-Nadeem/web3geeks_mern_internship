@@ -1,0 +1,50 @@
+{
+  "name": "day1",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "db:push": "prisma db push",
+    "db:seed": "npx tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.4.0",
+    "@tiptap/extension-blockquote": "^3.31.3",
+    "@tiptap/extension-bullet-list": "^3.31.3",
+    "@tiptap/extension-heading": "^3.31.3",
+    "@tiptap/extension-ordered-list": "^3.31.3",
+    "@tiptap/react": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.41.0",
+    "next": "16.3.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "swagger-ui-react": "^5.32.15",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@testing-library/react": "^16.3.3",
+    "@types/hast": "^3.0.5",
+    "@types/node": "^20",
+    "@types/prismjs": "^1.26.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/swagger-ui-react": "^5.18.0",
+    "@types/unist": "^3.0.3",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.4",
+    "jsdom": "^29.1.1",
+    "prisma": "^6.4.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.13",
+    "typescript": "^5",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
+  }
+}
