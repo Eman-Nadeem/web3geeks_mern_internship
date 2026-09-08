@@ -161,7 +161,7 @@ export function EditorHeader({
                 </button>
 
                 {isCategoryMenuOpen && (
-                  <div className="absolute left-0 mt-1 w-36 bg-white dark:bg-slate-900 border border-(--border-subtle) rounded-lg shadow-lg py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="absolute left-0 mt-1 w-36 bg-white border border-(--border-subtle) rounded-lg shadow-lg py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
                     <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       Category
                     </div>
@@ -173,8 +173,8 @@ export function EditorHeader({
                           onCategoryChange?.(cat);
                           setIsCategoryMenuOpen(false);
                         }}
-                        className={`w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
-                          category === cat ? "font-semibold text-blue-600 dark:text-blue-400" : "text-slate-700 dark:text-slate-200"
+                        className={`w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between hover:bg-slate-50 transition-colors ${
+                          category === cat ? "font-semibold text-blue-600" : "text-slate-700"
                         }`}
                       >
                         <span>{cat}</span>
@@ -211,7 +211,7 @@ export function EditorHeader({
                 </button>
 
                 {isStatusMenuOpen && (
-                  <div className="absolute left-0 mt-1 w-36 bg-white dark:bg-slate-900 border border-(--border-subtle) rounded-lg shadow-lg py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="absolute left-0 mt-1 w-36 bg-white border border-(--border-subtle) rounded-lg shadow-lg py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
                     <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       Status
                     </div>
@@ -223,8 +223,8 @@ export function EditorHeader({
                           onStatusChange?.(st);
                           setIsStatusMenuOpen(false);
                         }}
-                        className={`w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
-                          status === st ? "font-semibold text-blue-600 dark:text-blue-400" : "text-slate-700 dark:text-slate-200"
+                        className={`w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between hover:bg-slate-50 transition-colors ${
+                          status === st ? "font-semibold text-blue-600" : "text-slate-700"
                         }`}
                       >
                         <span>{st}</span>

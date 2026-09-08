@@ -1,6 +1,6 @@
+import "dotenv/config";
 import http from "http";
 import { Server, Socket } from "socket.io";
-import dotenv from "dotenv";
 import { verifyToken, JWTPayload } from "../lib/auth/jwt";
 import {
   REALTIME_EVENTS,
@@ -17,8 +17,6 @@ import {
   AccessRole,
 } from "../lib/db/documents";
 
-dotenv.config();
-
 const PORT = Number(process.env.SOCKET_PORT) || 3001;
 const ALLOWED_ORIGIN = process.env.CORS_ORIGIN || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -29,7 +27,12 @@ const server = http.createServer((_req, res) => {
 
 export const io = new Server(server, {
   cors: {
-    origin: [ALLOWED_ORIGIN, "http://localhost:3000"],
+    origin: (origin, callback) => {
+      if (!origin || origin.includes("localhost") || origin.includes("127.0.0.1") || origin === ALLOWED_ORIGIN) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -199,14 +202,18 @@ io.on("connection", (rawSocket) => {
         updatedAt,
       });
 
-      // Persist to database asynchronously
-      void updateDocument(documentId, user.id, {
-        title,
-        content,
-        jsonContent,
-        status,
-        category,
-      });
+      // Persist to database asynchronously with error handling
+      try {
+        await updateDocument(documentId, user.id, {
+          title,
+          content,
+          jsonContent,
+          status,
+          category,
+        });
+      } catch (dbErr) {
+        console.error("[Socket] Failed to persist document update to database:", dbErr);
+      }
 
       if (ack) ack({ success: true, updatedAt });
     } catch (error) {

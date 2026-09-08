@@ -25,11 +25,11 @@ A production-grade, multi-user real-time collaborative document editor built wit
 ```
 
 - **Frontend & App Engine**: Next.js 15+ App Router, React 19, Vanilla CSS "Clarity" Design System.
-- **Authentication (Task 0)**: Email & password credentials with `bcryptjs` (salt rounds 10), signed `jose` JWTs in `httpOnly`, `secure`, `sameSite: "lax"` cookies, user avatar profile editing, and strict document ownership enforcement (401 Unauthorized / 403 Forbidden).
-- **Real-Time Engine (Tasks 1–4)**: Dedicated Socket.IO server with JWT handshake authentication, document room isolation (`document:{documentId}`), debounced change emissions (250ms), and real-time collaborator tracking (`user_joined` / `user_left`).
+- **Authentication (Task 0)**: Email & password credentials with `bcryptjs` (salt rounds 10), signed `jose` JWTs in `httpOnly`, `secure`, `sameSite: "lax"` cookies, user avatar profile editing with Cloudinary support, and strict document ownership enforcement (401 Unauthorized / 403 Forbidden).
+- **Real-Time Engine (Tasks 1–4)**: Dedicated Socket.IO server with JWT handshake authentication, document room isolation (`document:{documentId}`), debounced change emissions (250ms), role-based edit permissions (owner/editor can edit, viewer is read-only), and real-time collaborator tracking (`user_joined` / `user_left`).
 - **Connection Resilience (Task 6)**: Live visual status badges (`Live Sync`, `Connecting`, `Reconnecting`, `Offline`), non-blocking local editing continuity when offline, and auto-rejoining with state resync on reconnection.
 - **Database**: Prisma ORM with connection-pooled PostgreSQL on Neon.
-- **Testing**: Vitest unit & integration test suite (38 automated tests covering auth crypto, validation schemas, ownership security, and room isolation).
+- **Testing**: Vitest unit & integration test suite (57 automated tests across 7 suites covering auth crypto, validation schemas, ownership security, sharing permissions, and room isolation).
 
 ---
 
@@ -55,6 +55,13 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 NEXT_PUBLIC_SOCKET_URL="http://localhost:3001"
 SOCKET_PORT=3001
 CORS_ORIGIN="http://localhost:3000"
+
+# Optional Cloudinary image upload configuration:
+CLOUDINARY_CLOUD_NAME="your_cloud_name"
+CLOUDINARY_API_KEY="your_api_key"
+CLOUDINARY_API_SECRET="your_api_secret"
+# Or unsigned preset:
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="your_unsigned_preset"
 ```
 
 ### 3. Synchronize Database & Seed Initial Users
@@ -82,12 +89,14 @@ Run all Vitest test suites:
 ```bash
 npm test
 ```
-The test suite validates:
+The test suite validates (57 tests passing):
 1. **Password Hashing & JWT Verification**: `__tests__/auth.test.ts`
 2. **Document Ownership & Access Enforcement**: `__tests__/documents-api.test.ts`
 3. **Zod Event Contracts**: `__tests__/realtime-events.test.ts`
 4. **Zod Input Validation**: `__tests__/validation.test.ts`
 5. **Socket.IO Room Isolation & Handshake Auth**: `__tests__/socket-rooms.test.ts`
+6. **Bug Fixes & Edge Cases**: `__tests__/bug-fixes.test.ts`
+7. **Document Sharing & Collaborator Roles**: `__tests__/sharing-access.test.ts`
 
 ---
 

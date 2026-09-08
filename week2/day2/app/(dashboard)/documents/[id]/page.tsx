@@ -1,7 +1,8 @@
 import { getDocumentById, getUserDocumentAccess } from "@/lib/db/documents";
 import { notFound, redirect } from "next/navigation";
 import { EditorClientContainer } from "./editor-client-container";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getCurrentUser, AUTH_COOKIE_NAME } from "@/lib/auth/session";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { ShieldAlert, ArrowLeft } from "lucide-react";
 
@@ -16,6 +17,9 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
   if (!user) {
     redirect("/login");
   }
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get(AUTH_COOKIE_NAME)?.value || "";
 
   const { id } = await params;
   if (!id) {
@@ -70,6 +74,7 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
       ownerName={document.owner?.name || "Document Owner"}
       ownerEmail={document.owner?.email}
       ownerAvatarUrl={document.owner?.avatarUrl}
+      token={token}
     />
   );
 }

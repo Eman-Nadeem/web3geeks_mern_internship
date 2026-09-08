@@ -20,6 +20,7 @@ interface EditorClientContainerProps {
   ownerName: string;
   ownerEmail?: string;
   ownerAvatarUrl?: string | null;
+  token?: string;
 }
 
 export function EditorClientContainer({
@@ -32,6 +33,7 @@ export function EditorClientContainer({
   ownerName,
   ownerEmail,
   ownerAvatarUrl,
+  token,
 }: EditorClientContainerProps) {
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
@@ -101,6 +103,7 @@ export function EditorClientContainer({
   // Initialize real-time WebSocket connection for this document
   const { connectionState, activeUsers, sendChange } = useDocumentSocket({
     documentId: id,
+    token,
     onRemoteUpdate: handleRemoteUpdate,
     onUserJoined: handleUserJoined,
     onUserLeft: handleUserLeft,

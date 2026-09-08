@@ -7,11 +7,15 @@ import { useState } from "react";
 interface NewDocumentButtonProps {
   onSuccess?: () => void;
   showText?: boolean;
+  fullWidth?: boolean;
+  className?: string;
 }
 
 export function NewDocumentButton({
   onSuccess,
   showText = true,
+  fullWidth = false,
+  className = "",
 }: NewDocumentButtonProps) {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
@@ -40,20 +44,46 @@ export function NewDocumentButton({
     }
   };
 
+  const baseStyle =
+    "bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold transition-all flex items-center justify-center active:scale-95 disabled:opacity-60 cursor-pointer shadow-sm hover:shadow";
+
+  if (!showText) {
+    // Compact icon-only "+" button (matches stats card height)
+    return (
+      <button
+        onClick={handleCreate}
+        disabled={isCreating}
+        title="Create new document"
+        aria-label="Create new document"
+        className={`${baseStyle} w-11 h-11 rounded-xl shrink-0 ${className}`}
+      >
+        {isCreating ? (
+          <Loader2 className="w-5 h-14 animate-spin" />
+        ) : (
+          <Plus className="w-5 h-14 stroke-[2.5]" />
+        )}
+      </button>
+    );
+  }
+
   return (
     <button
       onClick={handleCreate}
       disabled={isCreating}
       title="Create new document"
       aria-label="Create new document"
-      className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium text-xs sm:text-sm px-3.5 py-2 rounded-xl shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-60 cursor-pointer"
+      className={`${baseStyle} ${
+        fullWidth
+          ? "w-full py-2.5 px-4 text-sm rounded-xl gap-2"
+          : "text-xs sm:text-sm px-3.5 py-2 rounded-xl gap-1.5"
+      } ${className}`}
     >
       {isCreating ? (
         <Loader2 className="w-4 h-4 animate-spin" />
       ) : (
         <Plus className="w-4 h-4 stroke-[2.5]" />
       )}
-      {showText && <span>New Doc</span>}
+      <span>New Doc</span>
     </button>
   );
 }

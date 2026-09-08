@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   LayoutGrid,
@@ -15,8 +16,10 @@ import {
   ChevronDown,
   CheckCircle2,
   Filter,
+  Trash2,
 } from "lucide-react";
 import { NewDocumentButton } from "@/components/documents/new-document-button";
+import { DeleteDocumentModal } from "@/components/documents/delete-document-modal";
 import { AccessRole, VALID_STATUSES, VALID_CATEGORIES } from "@/lib/db/documents";
 import {
   CollaboratorAvatarGroup,
@@ -40,12 +43,91 @@ interface DocumentsViewContainerProps {
 }
 
 export function DocumentsViewContainer({ initialDocuments }: DocumentsViewContainerProps) {
+  const router = useRouter();
   const [documents, setDocuments] = useState<DocumentViewModel[]>(initialDocuments);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [activeMenuDocId, setActiveMenuDocId] = useState<{ id: string; type: "status" | "category" } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Sync documents state whenever server props update
+  useEffect(() => {
+    setDocuments(initialDocuments);
+  }, [initialDocuments]);
+
+  // Synchronize document deletion and rename events across components (e.g. sidebar or editor)
+  useEffect(() => {
+    const handleDocumentsUpdated = (event: Event) => {
+      const customEv = event as CustomEvent<{ id?: string; title?: string; deleted?: boolean }>;
+      if (customEv.detail?.deleted && customEv.detail?.id) {
+        setDocuments((prev) => prev.filter((d) => d.id !== customEv.detail.id));
+        router.refresh();
+      } else if (customEv.detail?.id && customEv.detail?.title !== undefined) {
+        setDocuments((prev) =>
+          prev.map((d) =>
+            d.id === customEv.detail.id ? { ...d, title: customEv.detail.title! } : d
+          )
+        );
+      } else {
+        router.refresh();
+      }
+    };
+
+    window.addEventListener("documents-updated", handleDocumentsUpdated);
+    return () => window.removeEventListener("documents-updated", handleDocumentsUpdated);
+  }, [router]);
+
+  // Instantly update avatars across document cards & lists when user changes profile picture
+  useEffect(() => {
+    const handleProfileUpdated = (event: Event) => {
+      const customEv = event as CustomEvent<{ user?: { id?: string; email?: string; name?: string; avatarUrl?: string | null } }>;
+      if (customEv.detail?.user) {
+        const u = customEv.detail.user;
+        setDocuments((prev) =>
+          prev.map((doc) => ({
+            ...doc,
+            collaborators: doc.collaborators.map((c) =>
+              c.id === u.id || c.email === u.email || (c.isOwner && !c.id)
+                ? { ...c, name: u.name || c.name, avatarUrl: u.avatarUrl }
+                : c
+            ),
+          }))
+        );
+      }
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdated);
+    return () => window.removeEventListener("profile-updated", handleProfileUpdated);
+  }, []);
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    try {
+      setIsDeleting(true);
+      const res = await fetch(`/api/documents/${deleteTarget.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setDocuments((prev) => prev.filter((d) => d.id !== deleteTarget.id));
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("documents-updated", {
+              detail: { id: deleteTarget.id, deleted: true },
+            })
+          );
+        }
+        router.refresh();
+      }
+    } catch (err) {
+      console.error("Failed to delete document:", err);
+    } finally {
+      setIsDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -193,13 +275,18 @@ export function DocumentsViewContainer({ initialDocuments }: DocumentsViewContai
           <div className="h-4 w-px bg-(--border-subtle) mx-1 hidden sm:block" />
 
           {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 bg-(--bg-surface-muted) border border-(--border-subtle) p-0.5 rounded-lg">
+          <div
+            style={{ backgroundColor: "#F1F1F4" }}
+            className="flex items-center gap-1 border border-(--border-subtle) p-0.5 rounded-lg"
+          >
             <button
               onClick={() => setViewMode("grid")}
+              style={{
+                backgroundColor: viewMode === "grid" ? "#ffffff" : "transparent",
+                color: viewMode === "grid" ? "#2563eb" : "#64748b",
+              }}
               className={`p-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
-                viewMode === "grid"
-                  ? "bg-white dark:bg-slate-800 text-blue-600 font-semibold shadow-xs"
-                  : "text-(--text-tertiary) hover:text-(--text-primary)"
+                viewMode === "grid" ? "shadow-xs font-semibold" : "hover:text-slate-900"
               }`}
               title="Grid view"
             >
@@ -207,10 +294,12 @@ export function DocumentsViewContainer({ initialDocuments }: DocumentsViewContai
             </button>
             <button
               onClick={() => setViewMode("table")}
+              style={{
+                backgroundColor: viewMode === "table" ? "#ffffff" : "transparent",
+                color: viewMode === "table" ? "#2563eb" : "#64748b",
+              }}
               className={`p-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
-                viewMode === "table"
-                  ? "bg-white dark:bg-slate-800 text-blue-600 font-semibold shadow-xs"
-                  : "text-(--text-tertiary) hover:text-(--text-primary)"
+                viewMode === "table" ? "shadow-xs font-semibold" : "hover:text-slate-900"
               }`}
               title="Table list view"
             >
@@ -280,14 +369,14 @@ export function DocumentsViewContainer({ initialDocuments }: DocumentsViewContai
 
                       {/* Category Dropdown */}
                       {isMenuOpen && activeMenuDocId?.type === "category" && (
-                        <div className="absolute left-0 top-7 w-36 bg-white dark:bg-slate-900 border border-(--border-subtle) rounded-lg shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
+                        <div className="absolute left-0 top-7 w-36 bg-white border border-(--border-subtle) rounded-lg shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
                           {VALID_CATEGORIES.map((cat) => (
                             <button
                               key={cat}
                               type="button"
                               onClick={() => handleUpdateCategory(doc.id, cat)}
-                              className={`w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
-                                doc.category === cat ? "font-semibold text-blue-600" : "text-slate-700 dark:text-slate-200"
+                              className={`w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between hover:bg-slate-50 transition-colors ${
+                                doc.category === cat ? "font-semibold text-blue-600" : "text-slate-700"
                               }`}
                             >
                               <span>{cat}</span>
@@ -325,14 +414,14 @@ export function DocumentsViewContainer({ initialDocuments }: DocumentsViewContai
 
                       {/* Status Dropdown */}
                       {isMenuOpen && activeMenuDocId?.type === "status" && (
-                        <div className="absolute right-0 top-7 w-36 bg-white dark:bg-slate-900 border border-(--border-subtle) rounded-lg shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
+                        <div className="absolute right-0 top-7 w-36 bg-white border border-(--border-subtle) rounded-lg shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
                           {VALID_STATUSES.map((st) => (
                             <button
                               key={st}
                               type="button"
                               onClick={() => handleUpdateStatus(doc.id, st)}
-                              className={`w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
-                                doc.status.label === st ? "font-semibold text-blue-600" : "text-slate-700 dark:text-slate-200"
+                              className={`w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between hover:bg-slate-50 transition-colors ${
+                                doc.status.label === st ? "font-semibold text-blue-600" : "text-slate-700"
                               }`}
                             >
                               <span>{st}</span>
@@ -361,9 +450,26 @@ export function DocumentsViewContainer({ initialDocuments }: DocumentsViewContai
                   {/* Stacked Collaborators using CollaboratorAvatarGroup */}
                   <CollaboratorAvatarGroup collaborators={doc.collaborators} maxDisplay={3} size="md" />
 
-                  <div className="flex items-center gap-1 text-[11px] text-(--text-tertiary)">
-                    <Clock className="w-3 h-3" />
-                    <span>{formatDate(doc.updatedAt)}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 text-[11px] text-(--text-tertiary)">
+                      <Clock className="w-3 h-3" />
+                      <span>{formatDate(doc.updatedAt)}</span>
+                    </div>
+
+                    {doc.accessRole !== "viewer" && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDeleteTarget({ id: doc.id, title: doc.title });
+                        }}
+                        className="p-1 text-(--text-tertiary) hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                        title="Delete document"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -428,12 +534,28 @@ export function DocumentsViewContainer({ initialDocuments }: DocumentsViewContai
                     </td>
 
                     <td className="py-3.5 px-4 text-right">
-                      <Link
-                        href={`/documents/${doc.id}`}
-                        className="p-1 text-(--text-tertiary) hover:text-(--accent-primary) rounded transition-colors inline-block"
-                      >
-                        <ArrowUpRight className="w-4 h-4" />
-                      </Link>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {doc.accessRole !== "viewer" && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDeleteTarget({ id: doc.id, title: doc.title });
+                            }}
+                            className="p-1 text-(--text-tertiary) hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                            title="Delete document"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <Link
+                          href={`/documents/${doc.id}`}
+                          className="p-1 text-(--text-tertiary) hover:text-(--accent-primary) rounded transition-colors inline-block"
+                        >
+                          <ArrowUpRight className="w-4 h-4" />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -442,6 +564,15 @@ export function DocumentsViewContainer({ initialDocuments }: DocumentsViewContai
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteDocumentModal
+        isOpen={Boolean(deleteTarget)}
+        documentTitle={deleteTarget?.title || ""}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

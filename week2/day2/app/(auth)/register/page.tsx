@@ -128,7 +128,7 @@ export default function RegisterPage() {
 
           {/* Avatar Selection */}
           <div>
-            <label className="block text-xs font-semibold text-(--text-secondary) mb-1.5 flex items-center gap-1">
+            <label className="text-xs font-semibold text-(--text-secondary) mb-1.5 flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-(--accent-primary)" />
               Choose Collaborator Avatar
             </label>

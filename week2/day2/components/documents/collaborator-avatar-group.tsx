@@ -8,6 +8,7 @@ export interface CollaboratorInfo {
   initials: string;
   avatarUrl?: string | null;
   isOwner?: boolean;
+  email?: string;
 }
 
 interface CollaboratorAvatarGroupProps {
@@ -49,7 +50,7 @@ function SingleAvatar({
 
   return (
     <div
-      className={`${sizeClass} rounded-full border-2 border-white dark:border-slate-900 ${bgColor} text-white ${textSize} font-bold flex items-center justify-center overflow-hidden shadow-xs shrink-0 transition-transform hover:scale-110 hover:z-20 cursor-default`}
+      className={`${sizeClass} rounded-full border-2 border-white ${bgColor} text-white ${textSize} font-bold flex items-center justify-center overflow-hidden shadow-xs shrink-0 transition-transform hover:scale-110 hover:z-20 cursor-default`}
       title={`${collaborator.name}${collaborator.isOwner ? " (Owner)" : ""}`}
     >
       {collaborator.avatarUrl && !imageError ? (
@@ -98,7 +99,7 @@ export function CollaboratorAvatarGroup({
 
       {overflowCount > 0 && (
         <div
-          className={`${sizeClass} rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 ${textSize} font-bold flex items-center justify-center shadow-xs shrink-0 cursor-default transition-transform hover:scale-110 hover:z-20`}
+          className={`${sizeClass} rounded-full border-2 border-white bg-slate-200 text-slate-700 ${textSize} font-bold flex items-center justify-center shadow-xs shrink-0 cursor-default transition-transform hover:scale-110 hover:z-20`}
           title={`+${overflowCount} more: ${overflowNames}`}
         >
           +{overflowCount}

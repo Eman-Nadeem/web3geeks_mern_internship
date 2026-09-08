@@ -110,7 +110,7 @@ export default async function DocumentsPage() {
             </div>
           </div>
 
-          <NewDocumentButton />
+          <NewDocumentButton showText={false} />
         </div>
       </div>
 

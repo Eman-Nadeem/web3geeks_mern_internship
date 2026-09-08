@@ -15,6 +15,7 @@ export type ConnectionState = "connecting" | "connected" | "disconnected" | "rec
 
 interface UseDocumentSocketOptions {
   documentId: string;
+  token?: string;
   onRemoteUpdate: (payload: DocumentUpdatePayload) => void;
   onActiveUsersChange?: (users: Collaborator[]) => void;
   onUserJoined?: (user: Collaborator) => void;
@@ -23,6 +24,7 @@ interface UseDocumentSocketOptions {
 
 export function useDocumentSocket({
   documentId,
+  token: initialToken,
   onRemoteUpdate,
   onActiveUsersChange,
   onUserJoined,
@@ -50,23 +52,42 @@ export function useDocumentSocket({
   useEffect(() => {
     if (!documentId || !user) return;
 
-    const socketUrl =
-      process.env.NEXT_PUBLIC_SOCKET_URL ||
-      (typeof window !== "undefined" && window.location.hostname === "localhost"
-        ? "http://localhost:3001"
-        : "");
+    let isCancelled = false;
 
-    const socket = io(socketUrl, {
-      withCredentials: true,
-      transports: ["websocket", "polling"],
-      reconnection: true,
-      reconnectionAttempts: 15,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-    });
+    async function initSocket() {
+      let authToken = initialToken;
+      if (!authToken) {
+        try {
+          const res = await fetch("/api/auth/token");
+          if (res.ok) {
+            const data = await res.json();
+            authToken = data.token;
+          }
+        } catch (e) {
+          console.warn("[Socket] Failed to fetch auth token:", e);
+        }
+      }
 
-    socketRef.current = socket;
-    setConnectionState("connecting");
+      if (isCancelled) return;
+
+      const socketUrl =
+        process.env.NEXT_PUBLIC_SOCKET_URL ||
+        (typeof window !== "undefined"
+          ? `${window.location.protocol}//${window.location.hostname}:3001`
+          : "http://localhost:3001");
+
+      const socket = io(socketUrl, {
+        auth: { token: authToken },
+        withCredentials: true,
+        transports: ["websocket", "polling"],
+        reconnection: true,
+        reconnectionAttempts: 15,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+      });
+
+      socketRef.current = socket;
+      setConnectionState("connecting");
 
     socket.on("connect", () => {
       setConnectionState("connected");
@@ -145,16 +166,22 @@ export function useDocumentSocket({
         onRemoteUpdateRef.current(data);
       }
     });
+  }
 
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      socket.emit(REALTIME_EVENTS.LEAVE_DOCUMENT, { documentId });
-      socket.disconnect();
+  void initSocket();
+
+  return () => {
+    isCancelled = true;
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    if (socketRef.current) {
+      socketRef.current.emit(REALTIME_EVENTS.LEAVE_DOCUMENT, { documentId });
+      socketRef.current.disconnect();
       socketRef.current = null;
-    };
-  }, [documentId, user]);
+    }
+  };
+}, [documentId, user, initialToken]);
 
   /**
    * Broadcasts document content, title, status, or category change debounced (250ms).

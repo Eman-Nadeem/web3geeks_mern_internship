@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { X, Check, Loader2, UserCircle2, Sparkles } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X, Check, Loader2, Sparkles, UploadCloud, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 
 interface EditProfileModalProps {
@@ -23,7 +23,9 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   const [name, setName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -33,6 +35,36 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   }, [user, isOpen]);
 
   if (!isOpen) return null;
+
+  const handleImageUpload = async (file: File) => {
+    try {
+      setIsUploading(true);
+      setErrorMessage("");
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to upload image");
+      }
+
+      setAvatarUrl(data.url);
+    } catch (err) {
+      console.error("Upload error:", err);
+      setErrorMessage(
+        err instanceof Error ? err.message : "Failed to upload image to Cloudinary"
+      );
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,15 +92,12 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
       <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl w-full max-w-md p-6 shadow-clarity space-y-5">
-        {/* Header */}
+        {/* Header (clean title without extra profile icon) */}
         <div className="flex items-center justify-between border-b border-(--border-subtle) pb-3">
-          <div className="flex items-center gap-2">
-            <UserCircle2 className="w-5 h-5 text-(--accent-primary)" />
-            <h3 className="font-semibold text-base text-(--text-primary)">Edit Profile</h3>
-          </div>
+          <h3 className="font-semibold text-base text-(--text-primary)">Edit Profile</h3>
           <button
             onClick={onClose}
-            className="p-1.5 text-(--text-tertiary) hover:text-(--text-primary) hover:bg-(--bg-surface-muted) rounded-lg transition-colors"
+            className="p-1.5 text-(--text-tertiary) hover:text-(--text-primary) hover:bg-(--bg-surface-muted) rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -101,18 +130,87 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-semibold text-(--text-primary)">Active Collaborator Avatar</div>
+              <div className="text-xs font-semibold text-(--text-primary)">{user?.name}</div>
               <div className="text-[11px] text-(--text-tertiary) truncate">
-                Displayed in active document rooms and collaboration badges.
+                {user?.email}
               </div>
             </div>
           </div>
 
+          {/* Cloudinary Image Upload */}
+          <div>
+            <label className="text-xs font-semibold text-(--text-secondary) mb-1.5 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <UploadCloud className="w-3.5 h-3.5 text-(--accent-primary)" />
+                Upload Profile Image
+              </span>
+              {avatarUrl && avatarUrl.includes("cloudinary") && (
+                <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">
+                  <Check className="w-3 h-3" /> Image Uploaded Successfully!
+                </span>
+              )}
+            </label>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleImageUpload(file);
+              }}
+            />
+
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-(--border-subtle) hover:border-(--accent-primary) rounded-xl p-4 text-center cursor-pointer transition-colors bg-(--bg-surface-muted) hover:bg-(--accent-soft-bg)/30 group"
+            >
+              {isUploading ? (
+                <div className="flex flex-col items-center gap-1.5 py-1">
+                  <Loader2 className="w-5 h-5 text-(--accent-primary) animate-spin" />
+                  <span className="text-xs font-medium text-(--text-primary)">Uploading Image...</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="w-8 h-8 rounded-full bg-white shadow-xs flex items-center justify-center text-(--accent-primary) group-hover:scale-110 transition-transform">
+                    <UploadCloud className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-(--accent-primary) hover:underline">
+                      Click to upload photo
+                    </span>
+                    <span className="text-xs text-(--text-secondary)"> or drag and drop</span>
+                  </div>
+                  <p className="text-[10px] text-(--text-tertiary)">
+                    PNG, JPG, WEBP, or GIF (max 10MB) • Uploads &amp; saves live URL to database
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {avatarUrl && (
+              <div className="mt-2 flex items-center justify-between text-[11px] bg-white border border-(--border-subtle) px-2.5 py-1.5 rounded-lg">
+                <span className="text-(--text-secondary) truncate max-w-70" title={avatarUrl}>
+                  {avatarUrl}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAvatarUrl("")}
+                  className="text-slate-400 hover:text-rose-600 transition-colors ml-2 font-medium flex items-center gap-1 cursor-pointer"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Remove</span>
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Quick Avatar Presets */}
           <div>
-            <label className="block text-xs font-semibold text-(--text-secondary) mb-1.5 flex items-center gap-1">
+            <label className="text-xs font-semibold text-(--text-secondary) mb-1.5 flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-(--accent-primary)" />
-              Choose Preset Avatar
+              Or Pick Preset Avatar
             </label>
             <div className="grid grid-cols-6 gap-2">
               {PRESET_AVATARS.map((preset) => {
@@ -122,7 +220,7 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
                     key={preset.url}
                     type="button"
                     onClick={() => setAvatarUrl(preset.url)}
-                    className={`p-1 rounded-xl border transition-all ${
+                    className={`p-1 rounded-xl border transition-all cursor-pointer ${
                       isSelected
                         ? "border-(--accent-primary) bg-(--accent-soft-bg) scale-105 shadow-sm"
                         : "border-(--border-subtle) hover:border-(--text-tertiary)"
@@ -135,20 +233,6 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
                 );
               })}
             </div>
-          </div>
-
-          {/* Custom Avatar URL */}
-          <div>
-            <label className="block text-xs font-semibold text-(--text-secondary) mb-1">
-              Or Custom Image URL
-            </label>
-            <input
-              type="url"
-              value={avatarUrl}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-              placeholder="https://example.com/avatar.png"
-              className="w-full px-3 py-2 text-xs bg-(--bg-surface-muted) border border-(--border-subtle) rounded-lg text-(--text-primary) placeholder-(--text-tertiary) focus:outline-none focus:border-(--accent-primary)"
-            />
           </div>
 
           {/* Name Field */}
@@ -190,7 +274,7 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
             </button>
             <button
               type="submit"
-              disabled={isSaving}
+              disabled={isSaving || isUploading}
               className="px-4 py-1.5 text-xs font-medium bg-(--accent-primary) hover:bg-(--accent-primary-hover) text-white rounded-lg shadow-clarity flex items-center gap-1.5 disabled:opacity-60 transition-all cursor-pointer"
             >
               {isSaving ? (

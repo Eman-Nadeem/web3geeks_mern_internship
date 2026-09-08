@@ -163,6 +163,14 @@ export function DocumentSidebar({ initialDocuments = [] }: DocumentSidebarProps)
       });
       if (res.ok) {
         setDocuments((prev) => prev.filter((d) => d.id !== deleteTarget.id));
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("documents-updated", {
+              detail: { id: deleteTarget.id, deleted: true },
+            })
+          );
+        }
+        router.refresh();
         if (pathname === `/documents/${deleteTarget.id}`) {
           router.push("/documents");
         }
@@ -232,7 +240,7 @@ export function DocumentSidebar({ initialDocuments = [] }: DocumentSidebarProps)
 
         {/* Action Button & Search */}
         <div className="p-3.5 space-y-3 border-b border-(--border-subtle)">
-          <NewDocumentButton onSuccess={() => setIsOpen(false)} />
+          <NewDocumentButton onSuccess={() => setIsOpen(false)} fullWidth />
 
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-(--text-tertiary) absolute left-3 top-1/2 -translate-y-1/2" />
@@ -396,14 +404,7 @@ export function DocumentSidebar({ initialDocuments = [] }: DocumentSidebarProps)
             </div>
           </div>
 
-          <div className="flex items-center gap-0.5 shrink-0">
-            <button
-              onClick={() => setIsProfileModalOpen(true)}
-              className="p-1.5 text-(--text-tertiary) hover:text-(--accent-primary) hover:bg-(--bg-surface) rounded-md transition-colors cursor-pointer"
-              title="Edit Profile"
-            >
-              <UserCircle2 className="w-4 h-4" />
-            </button>
+          <div className="flex items-center shrink-0">
             <button
               onClick={logout}
               className="p-1.5 text-(--text-tertiary) hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"

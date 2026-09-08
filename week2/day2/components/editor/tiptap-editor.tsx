@@ -137,7 +137,7 @@ export function TiptapEditor({ content, onChange, readOnly = false }: TiptapEdit
     <div className="w-full max-w-4xl mx-auto border border-(--border-subtle) rounded-xl bg-(--bg-surface) shadow-clarity my-6">
       {/* Read-Only Notice Banner for Viewers */}
       {readOnly && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-slate-900/60 border-b border-(--border-subtle) rounded-t-xl text-xs text-slate-600 dark:text-slate-300 font-medium">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border-b border-(--border-subtle) rounded-t-xl text-xs text-slate-600 font-medium">
           <Eye className="w-4 h-4 text-slate-500 shrink-0" />
           <span>Viewing only — You have read-only access to this document. Formatting controls and typing are disabled.</span>
         </div>
@@ -146,7 +146,7 @@ export function TiptapEditor({ content, onChange, readOnly = false }: TiptapEdit
       {/* Formatting Toolbar (Visible in both modes; visibly greyed-out and disabled for viewers) */}
       <div
         className={`flex flex-wrap items-center gap-1.5 px-4 py-2.5 border-b border-(--border-subtle) ${
-          readOnly ? "bg-slate-50/50 dark:bg-slate-900/40" : "bg-(--bg-surface-muted)"
+          readOnly ? "bg-slate-50/50" : "bg-(--bg-surface-muted)"
         } ${!readOnly ? "rounded-t-xl" : ""}`}
         aria-disabled={readOnly}
       >
@@ -317,7 +317,7 @@ export function TiptapEditor({ content, onChange, readOnly = false }: TiptapEdit
       </div>
 
       {/* Editor Canvas */}
-      <div className={`p-6 sm:p-8 bg-white dark:bg-slate-900 rounded-b-xl ${readOnly ? "select-text cursor-default" : ""}`}>
+      <div className={`p-6 sm:p-8 bg-white rounded-b-xl ${readOnly ? "select-text cursor-default" : ""}`}>
         <EditorContent editor={editor} />
       </div>
     </div>

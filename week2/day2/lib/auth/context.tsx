@@ -79,6 +79,12 @@ export function AuthProvider({
 
       const updated = await res.json();
       setUser(updated.data);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("profile-updated", { detail: { user: updated.data } })
+        );
+      }
+      router.refresh();
       return { success: true };
     } catch (err) {
       return { success: false, error: (err as Error).message };
