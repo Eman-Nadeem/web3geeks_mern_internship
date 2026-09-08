@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: syncdocs-realtime-socket
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && npx prisma generate
+    startCommand: npx tsx server/socket.ts
+    rootDir: week2/day2
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SOCKET_PORT
+        value: 10000
+      - key: CORS_ORIGIN
+        value: "https://your-syncdocs-frontend.vercel.app"
+      - key: DATABASE_URL
+        sync: false
+      - key: AUTH_SECRET
+        sync: false
