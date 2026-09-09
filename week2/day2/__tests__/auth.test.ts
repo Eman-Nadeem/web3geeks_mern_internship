@@ -70,5 +70,47 @@ describe("Authentication & Cryptography Unit Tests", () => {
       const payload = await verifyToken("");
       expect(payload).toBeNull();
     });
+
+    it("should reject token signed with the old public README secret", async () => {
+      const originalSecret = process.env.AUTH_SECRET;
+      try {
+        process.env.AUTH_SECRET = "production-configured-secret-key-32chars!";
+        const { SignJWT } = await import("jose");
+        const burnedSecret = new TextEncoder().encode(
+          "super-secret-key-week2-day2-collab-editor-32chars!"
+        );
+        const forgedToken = await new SignJWT(mockUser)
+          .setProtectedHeader({ alg: "HS256" })
+          .setIssuedAt()
+          .setExpirationTime("1h")
+          .sign(burnedSecret);
+
+        const payload = await verifyToken(forgedToken);
+        expect(payload).toBeNull();
+      } finally {
+        process.env.AUTH_SECRET = originalSecret;
+      }
+    });
+
+    it("should reject token signed with the insecure dev fallback secret when AUTH_SECRET is set", async () => {
+      const originalSecret = process.env.AUTH_SECRET;
+      try {
+        process.env.AUTH_SECRET = "production-configured-secret-key-32chars!";
+        const { SignJWT } = await import("jose");
+        const devFallbackSecret = new TextEncoder().encode(
+          "CHANGE_ME_INSECURE_DEV_ONLY_DO_NOT_DEPLOY"
+        );
+        const devToken = await new SignJWT(mockUser)
+          .setProtectedHeader({ alg: "HS256" })
+          .setIssuedAt()
+          .setExpirationTime("1h")
+          .sign(devFallbackSecret);
+
+        const payload = await verifyToken(devToken);
+        expect(payload).toBeNull();
+      } finally {
+        process.env.AUTH_SECRET = originalSecret;
+      }
+    });
   });
 });

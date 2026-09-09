@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { CollaboratorRole } from "@prisma/client";
+import { CollaboratorRole, Prisma } from "@prisma/client";
 
 export const DEMO_USER_ID = "user_demo_123";
 
@@ -221,6 +221,32 @@ export async function createDocument(
   });
 }
 
+export type DocumentWithAuthor = Prisma.DocumentGetPayload<{
+  include: {
+    owner: {
+      select: {
+        id: true;
+        name: true;
+        email: true;
+        avatarUrl: true;
+      };
+    };
+  };
+}>;
+
+export type CollaboratorWithUser = Prisma.DocumentCollaboratorGetPayload<{
+  include: {
+    user: {
+      select: {
+        id: true;
+        name: true;
+        email: true;
+        avatarUrl: true;
+      };
+    };
+  };
+}>;
+
 export type MutationResult<T> =
   | { success: true; data: T }
   | { success: false; status: 400 | 403 | 404; error: string };
@@ -239,7 +265,7 @@ export async function updateDocument(
     status?: string;
     category?: string;
   }
-): Promise<MutationResult<any>> {
+): Promise<MutationResult<DocumentWithAuthor>> {
   const access = await getUserDocumentAccess(userId, id);
 
   if (access === "none") {
@@ -368,7 +394,7 @@ export async function addDocumentCollaborator(
   email: string,
   role: "editor" | "viewer" = "editor",
   requesterId: string
-): Promise<MutationResult<any>> {
+): Promise<MutationResult<CollaboratorWithUser>> {
   const access = await getUserDocumentAccess(requesterId, documentId);
   if (access !== "owner") {
     return {
@@ -440,7 +466,7 @@ export async function removeDocumentCollaborator(
   documentId: string,
   targetUserId: string,
   requesterId: string
-): Promise<MutationResult<any>> {
+): Promise<MutationResult<{ userId: string; documentId: string }>> {
   const access = await getUserDocumentAccess(requesterId, documentId);
   if (access !== "owner") {
     return {
@@ -478,7 +504,7 @@ export async function updateCollaboratorRole(
   targetUserId: string,
   newRole: "editor" | "viewer",
   requesterId: string
-): Promise<MutationResult<any>> {
+): Promise<MutationResult<CollaboratorWithUser>> {
   const access = await getUserDocumentAccess(requesterId, documentId);
   if (access !== "owner") {
     return {

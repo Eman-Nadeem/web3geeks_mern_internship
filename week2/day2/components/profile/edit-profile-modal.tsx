@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { X, Check, Loader2, Sparkles, UploadCloud, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 
@@ -20,19 +20,26 @@ const PRESET_AVATARS = [
 
 export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   const { user, updateProfile } = useAuth();
-  const [name, setName] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
+  const [name, setName] = useState(user?.name || "");
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "");
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (user) {
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  const [prevUser, setPrevUser] = useState(user);
+
+  // Sync form inputs during render when modal opens or user identity changes
+  if (prevIsOpen !== isOpen || prevUser !== user) {
+    setPrevIsOpen(isOpen);
+    setPrevUser(user);
+    if (user && isOpen) {
       setName(user.name || "");
       setAvatarUrl(user.avatarUrl || "");
+      setErrorMessage("");
     }
-  }, [user, isOpen]);
+  }
 
   if (!isOpen) return null;
 

@@ -13,7 +13,6 @@ import {
 import {
   getUserDocumentAccess,
   updateDocument,
-  getDocumentById,
   AccessRole,
 } from "../lib/db/documents";
 
@@ -45,8 +44,24 @@ interface AuthenticatedSocket extends Socket {
   };
 }
 
-// In-memory active users per document room: Map<roomName, Map<userId, Collaborator>>
+// In-memory active users per document room: Map<roomName, Map<socketId, Collaborator>>
 const activeRoomUsers = new Map<string, Map<string, Collaborator>>();
+
+/**
+ * Returns a deduplicated list of active collaborators in a room (by user ID).
+ * This ensures that a user with multiple tabs open only appears once in the presence roster.
+ */
+function getUniqueRoomUsers(room: string): Collaborator[] {
+  const socketMap = activeRoomUsers.get(room);
+  if (!socketMap) return [];
+  const uniqueUsers = new Map<string, Collaborator>();
+  for (const collaborator of socketMap.values()) {
+    if (!uniqueUsers.has(collaborator.id)) {
+      uniqueUsers.set(collaborator.id, collaborator);
+    }
+  }
+  return Array.from(uniqueUsers.values());
+}
 
 // --- Authentication Middleware ---
 io.use(async (socket, next) => {
@@ -115,7 +130,7 @@ io.on("connection", (rawSocket) => {
       const room = getDocumentRoom(documentId);
       await socket.join(room);
 
-      // Track active collaborator in room
+      // Track active collaborator in room keyed by socket.id
       if (!activeRoomUsers.has(room)) {
         activeRoomUsers.set(room, new Map());
       }
@@ -127,10 +142,10 @@ io.on("connection", (rawSocket) => {
         avatarUrl: user.avatarUrl,
       };
 
-      activeRoomUsers.get(room)!.set(user.id, collaborator);
-      const currentActiveUsers = Array.from(activeRoomUsers.get(room)!.values());
+      activeRoomUsers.get(room)!.set(socket.id, collaborator);
+      const currentActiveUsers = getUniqueRoomUsers(room);
 
-      console.log(`[Socket] ${user.name} (${accessRole}) joined room ${room}. Active users: ${currentActiveUsers.length}`);
+      console.log(`[Socket] ${user.name} (${accessRole}) joined room ${room} on socket ${socket.id}. Unique active users: ${currentActiveUsers.length}`);
 
       // Send initial active user roster and access role to the joining client
       socket.emit(REALTIME_EVENTS.ROOM_USERS, {
@@ -233,22 +248,27 @@ io.on("connection", (rawSocket) => {
 
       socket.leave(room);
 
-      if (activeRoomUsers.has(room)) {
-        activeRoomUsers.get(room)!.delete(user.id);
-        const remaining = Array.from(activeRoomUsers.get(room)!.values());
+      const socketMap = activeRoomUsers.get(room);
+      if (socketMap) {
+        socketMap.delete(socket.id);
+        const userStillPresent = Array.from(socketMap.values()).some((c) => c.id === user.id);
+        const remaining = getUniqueRoomUsers(room);
 
-        socket.to(room).emit(REALTIME_EVENTS.USER_LEFT, {
-          documentId,
-          user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl },
-          activeUsers: remaining,
-        });
+        // Only broadcast user_left if the user has NO remaining open sockets/tabs in this room
+        if (!userStillPresent) {
+          socket.to(room).emit(REALTIME_EVENTS.USER_LEFT, {
+            documentId,
+            user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl },
+            activeUsers: remaining,
+          });
+        }
 
-        if (remaining.length === 0) {
+        if (socketMap.size === 0) {
           activeRoomUsers.delete(room);
         }
       }
 
-      console.log(`[Socket] ${user.name} left room ${room}`);
+      console.log(`[Socket] ${user.name} left room ${room} (Socket ID: ${socket.id})`);
     } catch (error) {
       console.error("[Socket] leave_document error:", error);
     }
@@ -256,21 +276,25 @@ io.on("connection", (rawSocket) => {
 
   // 5. Ungraceful Disconnect
   socket.on("disconnect", () => {
-    console.log(`[Socket] User disconnected: ${user.name} (${user.id})`);
+    console.log(`[Socket] User disconnected: ${user.name} (${user.id}) | Socket ID: ${socket.id}`);
 
-    for (const [room, usersMap] of activeRoomUsers.entries()) {
-      if (usersMap.has(user.id)) {
-        usersMap.delete(user.id);
-        const remaining = Array.from(usersMap.values());
+    for (const [room, socketMap] of activeRoomUsers.entries()) {
+      if (socketMap.has(socket.id)) {
+        socketMap.delete(socket.id);
+        const userStillPresent = Array.from(socketMap.values()).some((c) => c.id === user.id);
+        const remaining = getUniqueRoomUsers(room);
         const documentId = room.replace("document:", "");
 
-        socket.to(room).emit(REALTIME_EVENTS.USER_LEFT, {
-          documentId,
-          user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl },
-          activeUsers: remaining,
-        });
+        // Only broadcast user_left if the user has NO remaining open sockets/tabs in this room
+        if (!userStillPresent) {
+          socket.to(room).emit(REALTIME_EVENTS.USER_LEFT, {
+            documentId,
+            user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl },
+            activeUsers: remaining,
+          });
+        }
 
-        if (remaining.length === 0) {
+        if (socketMap.size === 0) {
           activeRoomUsers.delete(room);
         }
       }

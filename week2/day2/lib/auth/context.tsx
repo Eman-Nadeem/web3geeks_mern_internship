@@ -48,10 +48,38 @@ export function AuthProvider({
   }, []);
 
   useEffect(() => {
-    if (!initialUser) {
-      void refreshUser();
+    if (initialUser) return;
+
+    let isSubscribed = true;
+
+    async function fetchCurrentUser() {
+      try {
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        if (isSubscribed) {
+          if (res.ok) {
+            const json = await res.json();
+            setUser(json.data);
+          } else {
+            setUser(null);
+          }
+        }
+      } catch {
+        if (isSubscribed) {
+          setUser(null);
+        }
+      } finally {
+        if (isSubscribed) {
+          setIsLoading(false);
+        }
+      }
     }
-  }, [initialUser, refreshUser]);
+
+    void fetchCurrentUser();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [initialUser]);
 
   const logout = async () => {
     try {

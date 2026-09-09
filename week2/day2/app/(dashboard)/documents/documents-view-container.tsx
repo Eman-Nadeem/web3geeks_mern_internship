@@ -15,7 +15,6 @@ import {
   Search,
   ChevronDown,
   CheckCircle2,
-  Filter,
   Trash2,
 } from "lucide-react";
 import { NewDocumentButton } from "@/components/documents/new-document-button";
@@ -45,6 +44,7 @@ interface DocumentsViewContainerProps {
 export function DocumentsViewContainer({ initialDocuments }: DocumentsViewContainerProps) {
   const router = useRouter();
   const [documents, setDocuments] = useState<DocumentViewModel[]>(initialDocuments);
+  const [prevInitialDocs, setPrevInitialDocs] = useState(initialDocuments);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
@@ -53,10 +53,11 @@ export function DocumentsViewContainer({ initialDocuments }: DocumentsViewContai
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Sync documents state whenever server props update
-  useEffect(() => {
+  // Sync documents state during render whenever server props update
+  if (prevInitialDocs !== initialDocuments) {
+    setPrevInitialDocs(initialDocuments);
     setDocuments(initialDocuments);
-  }, [initialDocuments]);
+  }
 
   // Synchronize document deletion and rename events across components (e.g. sidebar or editor)
   useEffect(() => {

@@ -38,16 +38,16 @@ export function useDocumentSocket({
 
   // Keep latest callbacks in refs to avoid recreating socket listeners
   const onRemoteUpdateRef = useRef(onRemoteUpdate);
-  onRemoteUpdateRef.current = onRemoteUpdate;
-
   const onActiveUsersChangeRef = useRef(onActiveUsersChange);
-  onActiveUsersChangeRef.current = onActiveUsersChange;
-
   const onUserJoinedRef = useRef(onUserJoined);
-  onUserJoinedRef.current = onUserJoined;
-
   const onUserLeftRef = useRef(onUserLeft);
-  onUserLeftRef.current = onUserLeft;
+
+  useEffect(() => {
+    onRemoteUpdateRef.current = onRemoteUpdate;
+    onActiveUsersChangeRef.current = onActiveUsersChange;
+    onUserJoinedRef.current = onUserJoined;
+    onUserLeftRef.current = onUserLeft;
+  });
 
   useEffect(() => {
     if (!documentId || !user) return;
@@ -206,6 +206,10 @@ export function useDocumentSocket({
             ...change,
             updatedAt: new Date().toISOString(),
           });
+        } else {
+          // Note (Issue 4 - Documented Exception): Offline edits are not rebroadcast on reconnect in Day 2 scope.
+          // Changes made while disconnected still persist via HTTP autosave; peer sync replay and advanced
+          // conflict resolution are tracked as future milestones.
         }
       }, 250);
     },

@@ -1,9 +1,21 @@
 import { SignJWT, jwtVerify } from "jose";
 
-const DEFAULT_SECRET = "super-secret-key-week2-day2-collab-editor-32chars!";
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.AUTH_SECRET || DEFAULT_SECRET
-);
+export const DEFAULT_SECRET = "CHANGE_ME_INSECURE_DEV_ONLY_DO_NOT_DEPLOY";
+
+export function getJwtSecret(): Uint8Array {
+  const secret = process.env.AUTH_SECRET || DEFAULT_SECRET;
+
+  if (
+    process.env.NODE_ENV === "production" &&
+    (!process.env.AUTH_SECRET || process.env.AUTH_SECRET === DEFAULT_SECRET)
+  ) {
+    throw new Error(
+      "FATAL CONFIGURATION ERROR: AUTH_SECRET environment variable is missing or set to the insecure dev fallback in production. Generate a strong secret via `openssl rand -base64 32`."
+    );
+  }
+
+  return new TextEncoder().encode(secret);
+}
 
 export interface JWTPayload {
   id: string;
@@ -16,6 +28,7 @@ export interface JWTPayload {
  * Signs a JWT token with user credentials.
  */
 export async function signToken(payload: JWTPayload): Promise<string> {
+  const secret = getJwtSecret();
   return await new SignJWT({
     id: payload.id,
     email: payload.email,
@@ -25,7 +38,7 @@ export async function signToken(payload: JWTPayload): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(JWT_SECRET);
+    .sign(secret);
 }
 
 /**
@@ -33,7 +46,8 @@ export async function signToken(payload: JWTPayload): Promise<string> {
  */
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET, {
+    const secret = getJwtSecret();
+    const { payload } = await jwtVerify(token, secret, {
       algorithms: ["HS256"],
     });
 

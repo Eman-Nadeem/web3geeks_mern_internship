@@ -50,7 +50,8 @@ Ensure your `.env` contains:
 ```env
 DATABASE_URL="postgresql://...neon.tech/neondb?sslmode=require"
 DATABASE_URL_UNPOOLED="postgresql://...neon.tech/neondb?sslmode=require"
-AUTH_SECRET="super-secret-key-week2-day2-collab-editor-32chars!"
+# Generate via: openssl rand -base64 32 (do NOT commit or use default fallback in production)
+AUTH_SECRET="RUN_OPENSSL_RAND_BASE64_32_TO_GENERATE_YOUR_SECRET"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 NEXT_PUBLIC_SOCKET_URL="http://localhost:3001"
 SOCKET_PORT=3001

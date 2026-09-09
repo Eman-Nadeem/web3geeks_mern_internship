@@ -15,7 +15,6 @@ import {
   Pencil,
   Check,
   LogOut,
-  UserCircle2,
 } from "lucide-react";
 import { NewDocumentButton } from "./new-document-button";
 import { DeleteDocumentModal } from "./delete-document-modal";

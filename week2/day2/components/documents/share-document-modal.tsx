@@ -57,29 +57,63 @@ export function ShareDocumentModal({
   const [copiedLink, setCopiedLink] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
-  const fetchCollaborators = useCallback(async () => {
-    try {
+  // Clear feedback messages and initialize loading during render when modal opens
+  if (prevIsOpen !== isOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
+      setErrorMessage("");
+      setSuccessMessage("");
       setIsLoading(true);
+    }
+  }
+
+  const refreshCollaborators = useCallback(async () => {
+    try {
       const res = await fetch(`/api/documents/${documentId}/collaborators`);
       if (res.ok) {
         const json = await res.json();
         setCollaborators(json.data || []);
       }
     } catch (err) {
-      console.error("Failed to fetch collaborators:", err);
+      console.error("Failed to refresh collaborators:", err);
     } finally {
       setIsLoading(false);
     }
   }, [documentId]);
 
   useEffect(() => {
-    if (isOpen) {
-      setErrorMessage("");
-      setSuccessMessage("");
-      void fetchCollaborators();
+    if (!isOpen) return;
+
+    let isSubscribed = true;
+
+    async function loadCollaborators() {
+      try {
+        const res = await fetch(`/api/documents/${documentId}/collaborators`);
+        if (isSubscribed) {
+          if (res.ok) {
+            const json = await res.json();
+            setCollaborators(json.data || []);
+          }
+        }
+      } catch (err) {
+        if (isSubscribed) {
+          console.error("Failed to fetch collaborators:", err);
+        }
+      } finally {
+        if (isSubscribed) {
+          setIsLoading(false);
+        }
+      }
     }
-  }, [isOpen, fetchCollaborators]);
+
+    void loadCollaborators();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [isOpen, documentId]);
 
   if (!isOpen) return null;
 
@@ -106,7 +140,7 @@ export function ShareDocumentModal({
 
       setSuccessMessage(`Access granted to ${email.trim()} as ${role}!`);
       setEmail("");
-      void fetchCollaborators();
+      void refreshCollaborators();
     } catch (err) {
       setErrorMessage((err as Error).message);
     } finally {
