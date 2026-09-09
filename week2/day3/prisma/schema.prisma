@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CollaboratorRole {
+  editor
+  viewer
+}
+
+model User {
+  id                    String                 @id @default(cuid())
+  email                 String                 @unique
+  name                  String?
+  password              String                 @default("")
+  avatarUrl             String?
+  documents             Document[]
+  collaborations        DocumentCollaborator[] @relation("UserCollaborations")
+  grantedCollaborations DocumentCollaborator[] @relation("AddedByCollaborations")
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @default(now()) @updatedAt
+}
+
+model Document {
+  id            String                 @id @default(cuid())
+  title         String                 @default("Untitled Document")
+  content       String                 // HTML string representation
+  jsonContent   String?                // Optional JSON string representation (ProseMirror node)
+  status        String                 @default("Draft")
+  category      String                 @default("General")
+  version       Int                    @default(1)
+  ownerId       String
+  owner         User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  collaborators DocumentCollaborator[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+}
+
+model DocumentCollaborator {
+  id         String           @id @default(cuid())
+  documentId String
+  document   Document         @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User             @relation("UserCollaborations", fields: [userId], references: [id], onDelete: Cascade)
+  role       CollaboratorRole @default(editor)
+  addedAt    DateTime         @default(now())
+  addedById  String?
+  addedBy    User?            @relation("AddedByCollaborations", fields: [addedById], references: [id], onDelete: SetNull)
+
+  @@unique([documentId, userId])
+  @@index([documentId])
+  @@index([userId])
+}
