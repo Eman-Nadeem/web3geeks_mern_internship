@@ -8,6 +8,7 @@ import { useDocumentSocket } from "@/lib/realtime/use-document-socket";
 import { DocumentUpdatePayload, Collaborator } from "@/lib/realtime/events";
 import { AccessRole } from "@/lib/db/documents";
 import { AlertCircle } from "lucide-react";
+import { useAuth } from "@/lib/auth/context";
 
 interface EditorClientContainerProps {
   id: string;
@@ -52,6 +53,8 @@ export function EditorClientContainer({
 
   const isViewer = accessRole === "viewer";
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasLocalPendingChangesRef = useRef<boolean>(false);
+  const { user } = useAuth();
 
   const addToast = useCallback((toast: Omit<ToastItem, "id">) => {
     const id = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -64,11 +67,19 @@ export function EditorClientContainer({
 
   // Handle broadcast updates received from remote collaborators
   const handleRemoteUpdate = useCallback((payload: DocumentUpdatePayload) => {
+    // Guard against applying our own broadcast update back to ourselves
+    if (user && payload.updatedBy?.id === user.id) {
+      return;
+    }
     if (payload.title !== undefined) {
       setTitle(payload.title);
     }
     if (payload.content !== undefined) {
       if (!conflictState) {
+        // Do not overwrite uncommitted local typing
+        if (hasLocalPendingChangesRef.current) {
+          return;
+        }
         setContent(payload.content);
       }
     }
@@ -81,7 +92,7 @@ export function EditorClientContainer({
     if (!conflictState) {
       setSaveStatus("saved");
     }
-  }, [conflictState]);
+  }, [conflictState, user]);
 
   // Presence toast notifications when collaborators join/leave
   const handleUserJoined = useCallback(
@@ -121,6 +132,7 @@ export function EditorClientContainer({
     documentVersion,
     sendChange,
     sendCursor,
+    hasPendingChangesRef,
   } = useDocumentSocket({
     documentId: id,
     token,
@@ -130,6 +142,9 @@ export function EditorClientContainer({
     onSyncResponse: (syncData) => {
       if (conflictState) {
         // Protect user's active offline conflict edits from being clobbered during sync response
+        return;
+      }
+      if (hasLocalPendingChangesRef.current) {
         return;
       }
       if (syncData.content && syncData.content !== content) {
@@ -249,11 +264,18 @@ export function EditorClientContainer({
   const handleContentChange = (newHtml: string, newJson?: string) => {
     if (isViewer) return;
 
+    hasLocalPendingChangesRef.current = true;
     setContent(newHtml);
     setSaveStatus("saving");
 
     // Broadcast change to room members via Socket.IO (primary live persistence path)
     sendChange({ content: newHtml, jsonContent: newJson });
+
+    setTimeout(() => {
+      if (!hasPendingChangesRef?.current) {
+        hasLocalPendingChangesRef.current = false;
+      }
+    }, 200);
 
     // Architectural Fix (Option c): HTTP autosave acts strictly as an offline fallback
     if (connectionState !== "connected") {

@@ -476,8 +476,8 @@ io.on("connection", (rawSocket) => {
         color: userColor,
       };
 
-      // Broadcast to room members with new resolved version (LWW convergence)
-      io.to(room).emit(REALTIME_EVENTS.DOCUMENT_UPDATE, {
+      // Broadcast to other room members with new resolved version (LWW convergence)
+      socket.to(room).emit(REALTIME_EVENTS.DOCUMENT_UPDATE, {
         documentId,
         title,
         content,

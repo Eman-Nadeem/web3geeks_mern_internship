@@ -54,6 +54,7 @@ export function useDocumentSocket({
   const lastCursorSentTimeRef = useRef<number>(0);
   const documentVersionRef = useRef<number>(1);
   const authTokenRef = useRef<string | undefined>(initialToken);
+  const hasPendingChangesRef = useRef<boolean>(false);
 
   // Priority 2: Sync-gate flag and ordered buffer queue
   const isSyncedRef = useRef<boolean>(false);
@@ -326,15 +327,10 @@ export function useDocumentSocket({
         }
       });
 
-      // Remote cursor and selection updates (Priority 2 buffer & Priority 4 rAF batching)
+      // Remote cursor and selection updates (Immediate processing with Priority 4 rAF batching)
       socket.on(REALTIME_EVENTS.CURSOR_UPDATE, (data: CursorUpdatePayload) => {
         if (data.documentId === documentId) {
           if (user && data.userId === user.id) return; // Do not render self cursor
-
-          if (!isSyncedRef.current) {
-            eventBufferRef.current.push({ type: "cursor_update", payload: data });
-            return;
-          }
 
           if (!data.cursor) {
             pendingRemoteCursorMapRef.current.delete(data.userId);
@@ -353,6 +349,15 @@ export function useDocumentSocket({
       // Incoming real-time document broadcast from peer (Priority 2: Sync-gate buffer check)
       socket.on(REALTIME_EVENTS.DOCUMENT_UPDATE, (data: DocumentUpdatePayload) => {
         if (data.documentId === documentId) {
+          // Self-echo guard: Ignore broadcasts originated by this client to prevent overwriting active typing
+          if (user && data.updatedBy?.id === user.id) {
+            if (data.version !== undefined) {
+              documentVersionRef.current = data.version;
+              setDocumentVersion(data.version);
+            }
+            return;
+          }
+
           if (!isSyncedRef.current) {
             // Buffer event until sync_response arrives
             eventBufferRef.current.push({ type: "document_update", payload: data });
@@ -446,19 +451,30 @@ export function useDocumentSocket({
       status?: string;
       category?: string;
     }) => {
+      hasPendingChangesRef.current = true;
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
 
       debounceTimerRef.current = setTimeout(() => {
+        hasPendingChangesRef.current = false;
         const socket = socketRef.current;
         if (socket && socket.connected) {
-          socket.emit(REALTIME_EVENTS.DOCUMENT_CHANGE, {
-            documentId,
-            ...change,
-            baseVersion: documentVersionRef.current,
-            updatedAt: new Date().toISOString(),
-          });
+          socket.emit(
+            REALTIME_EVENTS.DOCUMENT_CHANGE,
+            {
+              documentId,
+              ...change,
+              baseVersion: documentVersionRef.current,
+              updatedAt: new Date().toISOString(),
+            },
+            (res?: { success: boolean; version?: number; updatedAt?: string }) => {
+              if (res?.success && res.version !== undefined) {
+                documentVersionRef.current = res.version;
+                setDocumentVersion(res.version);
+              }
+            }
+          );
         } else {
           // Offline edits persist via HTTP autosave in local component state.
         }
@@ -536,5 +552,6 @@ export function useDocumentSocket({
     documentVersion,
     sendChange,
     sendCursor,
+    hasPendingChangesRef,
   };
 }

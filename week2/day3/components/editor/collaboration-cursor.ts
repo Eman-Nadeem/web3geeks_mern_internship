@@ -1,5 +1,5 @@
 import { Extension } from "@tiptap/core";
-import { Plugin, PluginKey } from "prosemirror-state";
+import { Plugin, PluginKey, Selection } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 
 export interface RemoteCursor {
@@ -18,6 +18,26 @@ declare module "@tiptap/core" {
     collaborationCursor: {
       setRemoteCursors: (cursors: RemoteCursor[]) => ReturnType;
     };
+  }
+}
+
+function resolveCursorPos(doc: any, rawPos: number): { pos: number; side: number } {
+  const docSize = doc.content.size;
+  const clampedRaw = Math.max(0, Math.min(rawPos, docSize));
+  const $pos = doc.resolve(clampedRaw);
+
+  if ($pos.parent.isTextblock) {
+    const start = $pos.start();
+    const end = $pos.end();
+    const safeFrom = Math.max(start, Math.min(clampedRaw, end));
+    const side = safeFrom >= end ? -1 : (safeFrom <= start ? 0 : -1);
+    return { pos: safeFrom, side };
+  } else {
+    const nearSel = Selection.near($pos, -1);
+    const safeFrom = nearSel ? nearSel.from : Math.max(1, Math.max(0, docSize - 1));
+    const $nearPos = doc.resolve(safeFrom);
+    const side = $nearPos.parent.isTextblock && safeFrom >= $nearPos.end() ? -1 : 0;
+    return { pos: safeFrom, side };
   }
 }
 
@@ -53,14 +73,35 @@ export const CollaborationCursor = Extension.create({
 
             // Map cursor positions when document changes so carets don't desync
             if (tr.docChanged && prev.cursors.length > 0) {
+              const stepsInfo = tr.steps.map((s: any) => ({
+                stepType: s.constructor?.name,
+                from: s.from,
+                to: s.to,
+                sliceSize: s.slice?.content?.size,
+              }));
+
               const mapped = prev.cursors.map((c) => {
                 if (!c.cursor) return c;
+                const beforeFrom = c.cursor.from;
+                const beforeTo = c.cursor.to;
+                const afterFrom = tr.mapping.map(c.cursor.from);
+                const afterTo = tr.mapping.map(c.cursor.to);
+
+                console.log("[CollabCursor:mapping]", {
+                  userId: c.userId,
+                  displayName: c.displayName,
+                  before: { from: beforeFrom, to: beforeTo },
+                  after: { from: afterFrom, to: afterTo },
+                  docChanged: tr.docChanged,
+                  steps: stepsInfo,
+                });
+
                 try {
                   return {
                     ...c,
                     cursor: {
-                      from: tr.mapping.map(c.cursor.from),
-                      to: tr.mapping.map(c.cursor.to),
+                      from: afterFrom,
+                      to: afterTo,
                     },
                   };
                 } catch {
@@ -86,13 +127,14 @@ export const CollaborationCursor = Extension.create({
             for (const user of pluginState.cursors) {
               if (!user.cursor) continue;
 
-              const from = Math.max(0, Math.min(user.cursor.from, docSize));
-              const to = Math.max(0, Math.min(user.cursor.to, docSize));
+              const { pos: safeFrom, side } = resolveCursorPos(state.doc, user.cursor.from);
 
               // 1. Text Selection Range Highlight (translucent colored overlay)
-              if (from !== to) {
-                const min = Math.min(from, to);
-                const max = Math.max(from, to);
+              if (user.cursor.from !== user.cursor.to) {
+                const selFrom = Math.max(0, Math.min(user.cursor.from, docSize));
+                const selTo = Math.max(0, Math.min(user.cursor.to, docSize));
+                const min = Math.min(selFrom, selTo);
+                const max = Math.max(selFrom, selTo);
                 if (min < max) {
                   decorations.push(
                     Decoration.inline(
@@ -110,24 +152,24 @@ export const CollaborationCursor = Extension.create({
 
               // 2. Cursor Caret & Floating Name Badge (Stable key prevents DOM node recreation)
               const widget = Decoration.widget(
-                from,
+                safeFrom,
                 () => {
                   const container = document.createElement("span");
                   container.className = "collaboration-cursor-caret";
                   container.style.position = "relative";
                   container.style.display = "inline-block";
-                  container.style.width = "2px";
+                  container.style.width = "0";
                   container.style.height = "1.2em";
                   container.style.verticalAlign = "text-bottom";
-                  container.style.marginLeft = "-1px";
-                  container.style.marginRight = "-1px";
+                  container.style.marginLeft = "0";
+                  container.style.marginRight = "0";
                   container.style.userSelect = "none";
                   container.style.pointerEvents = "none";
 
-                  // Vertical caret line
+                  // Vertical caret line (centered on 0-width insertion point)
                   const caret = document.createElement("span");
                   caret.style.position = "absolute";
-                  caret.style.left = "0";
+                  caret.style.left = "-1px";
                   caret.style.top = "-0.15em";
                   caret.style.bottom = "-0.15em";
                   caret.style.width = "2px";
@@ -137,7 +179,7 @@ export const CollaborationCursor = Extension.create({
                   // Floating Name Flag
                   const badge = document.createElement("span");
                   badge.style.position = "absolute";
-                  badge.style.left = "0";
+                  badge.style.left = "-1px";
                   badge.style.top = "-1.4em";
                   badge.style.backgroundColor = user.color;
                   badge.style.color = "#ffffff";
@@ -155,7 +197,7 @@ export const CollaborationCursor = Extension.create({
                   container.appendChild(badge);
                   return container;
                 },
-                { side: 1, key: `cursor-${user.userId}` }
+                { side, key: `cursor-${user.userId}` }
               );
 
               decorations.push(widget);

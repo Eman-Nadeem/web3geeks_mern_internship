@@ -105,9 +105,10 @@ export function TiptapEditor({
         contenteditable: !readOnly ? "true" : "false",
       },
       handleDOMEvents: {
-        blur: () => {
-          if (!isProgrammaticUpdateRef.current) {
-            onCursorChangeRef.current?.(null);
+        focus: () => {
+          if (editor && onCursorChangeRef.current) {
+            const { from, to } = editor.state.selection;
+            onCursorChangeRef.current({ from, to });
           }
           return false;
         },
@@ -126,7 +127,7 @@ export function TiptapEditor({
       if (readOnly) return;
       const html = editor.getHTML();
       const json = JSON.stringify(editor.getJSON());
-      lastEmittedHtml.current = html;
+      lastEmittedHtml.current = normalizeHtml(html);
       onChange(html, json);
     },
   });
@@ -166,7 +167,10 @@ export function TiptapEditor({
     }
 
     const normalized = normalizeHtml(content);
-    if (normalized !== lastEmittedHtml.current && normalized !== editor.getHTML()) {
+    const normalizedLastEmitted = normalizeHtml(lastEmittedHtml.current);
+    const normalizedEditor = normalizeHtml(editor.getHTML());
+
+    if (normalized !== normalizedLastEmitted && normalized !== normalizedEditor) {
       lastEmittedHtml.current = normalized;
 
       // 1. Save local selection

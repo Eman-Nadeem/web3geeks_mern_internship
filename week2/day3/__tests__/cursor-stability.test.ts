@@ -109,4 +109,56 @@ describe("Priority 4 — Bug: Cursor Stability & Decoration Key Invariance", () 
     onSelectionUpdate();
     expect(cursorSentCount).toBe(2);
   });
+
+  it("demonstrates that a full-document replacement causes stored remote cursors to map to the end of the document", () => {
+    const plugins = CollaborationCursor.config.addProseMirrorPlugins?.call({} as any) || [];
+    const initialDoc = testSchema.node("doc", null, [
+      testSchema.node("paragraph", null, [testSchema.text("Line 1 initial content")]),
+      testSchema.node("paragraph", null, [testSchema.text("Line 2 initial content")]),
+      testSchema.node("paragraph", null, [testSchema.text("Line 3 initial content")]),
+    ]);
+
+    let state = EditorState.create({
+      schema: testSchema,
+      doc: initialDoc,
+      plugins,
+    });
+
+    // User A (Alice) cursor is on Line 1 at offset 5
+    const cursors: RemoteCursor[] = [
+      {
+        userId: "user_alice",
+        displayName: "Alice",
+        color: "#2563EB",
+        cursor: { from: 5, to: 5 },
+      },
+    ];
+
+    state = state.apply(state.tr.setMeta(collaborationCursorPluginKey, cursors));
+
+    // Confirm Alice's cursor starts at from: 5
+    let pluginState = collaborationCursorPluginKey.getState(state);
+    expect(pluginState?.cursors[0].cursor?.from).toBe(5);
+
+    // Now simulate a full document replacement (setContent) triggered by an incoming update
+    const newDoc = testSchema.node("doc", null, [
+      testSchema.node("paragraph", null, [testSchema.text("Line 1 edited")]),
+      testSchema.node("paragraph", null, [testSchema.text("Line 2 edited")]),
+      testSchema.node("paragraph", null, [testSchema.text("Line 3 edited")]),
+      testSchema.node("paragraph", null, [testSchema.text("Line 4 new content")]),
+    ]);
+
+    const replaceTr = state.tr.replaceWith(0, state.doc.content.size, newDoc.content);
+    state = state.apply(replaceTr);
+
+    pluginState = collaborationCursorPluginKey.getState(state);
+    console.log("[Test result: cursor mapped after replaceWith(0, oldSize)]", {
+      before: 5,
+      after: pluginState?.cursors[0].cursor?.from,
+      newDocSize: state.doc.content.size,
+    });
+
+    // tr.mapping.map(5) on ReplaceStep(0, oldDocSize, ...) maps to the end of the replaced range!
+    expect(pluginState?.cursors[0].cursor?.from).toBe(state.doc.content.size);
+  });
 });
