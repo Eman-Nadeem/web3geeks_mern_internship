@@ -158,7 +158,41 @@ describe("Priority 4 — Bug: Cursor Stability & Decoration Key Invariance", () 
       newDocSize: state.doc.content.size,
     });
 
-    // tr.mapping.map(5) on ReplaceStep(0, oldDocSize, ...) maps to the end of the replaced range!
-    expect(pluginState?.cursors[0].cursor?.from).toBe(state.doc.content.size);
+    // With the full-document replacement guard, the stored cursor position (5) is preserved
+    // and does NOT map to the end of the document (65)!
+    expect(pluginState?.cursors[0].cursor?.from).toBe(5);
+    expect(pluginState?.cursors[0].cursor?.from).not.toBe(state.doc.content.size);
+  });
+
+  it("still properly remaps cursor positions during targeted incremental transactions", () => {
+    const plugins = CollaborationCursor.config.addProseMirrorPlugins?.call({} as any) || [];
+    const initialDoc = testSchema.node("doc", null, [
+      testSchema.node("paragraph", null, [testSchema.text("Hello world")]),
+    ]);
+
+    let state = EditorState.create({
+      schema: testSchema,
+      doc: initialDoc,
+      plugins,
+    });
+
+    const cursors: RemoteCursor[] = [
+      {
+        userId: "user_bob",
+        displayName: "Bob",
+        color: "#10B981",
+        cursor: { from: 6, to: 6 },
+      },
+    ];
+
+    state = state.apply(state.tr.setMeta(collaborationCursorPluginKey, cursors));
+
+    // User inserts 3 characters ("Hey") before Bob's cursor at offset 1
+    const tr = state.tr.insertText("Hey ", 1);
+    state = state.apply(tr);
+
+    const pluginState = collaborationCursorPluginKey.getState(state);
+    // 6 + 4 ("Hey ") = 10
+    expect(pluginState?.cursors[0].cursor?.from).toBe(10);
   });
 });

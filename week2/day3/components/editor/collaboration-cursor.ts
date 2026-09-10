@@ -73,35 +73,42 @@ export const CollaborationCursor = Extension.create({
 
             // Map cursor positions when document changes so carets don't desync
             if (tr.docChanged && prev.cursors.length > 0) {
-              const stepsInfo = tr.steps.map((s: any) => ({
-                stepType: s.constructor?.name,
-                from: s.from,
-                to: s.to,
-                sliceSize: s.slice?.content?.size,
-              }));
+              const prevDocSize = (tr as any).docs?.[0]?.content?.size ?? 0;
+              const isFullDocReplace =
+                tr.steps.length > 0 &&
+                tr.steps.some(
+                  (s: any) => s.from === 0 && (s.to >= prevDocSize || s.to >= tr.doc.content.size)
+                );
 
+              const docSize = tr.doc.content.size;
+
+              // Full document replacements (such as setContent) wipe from 0 to oldDocSize.
+              // ProseMirror's tr.mapping.map() treats this as an entire replacement and maps any
+              // position inside [0, oldDocSize] straight to newDocSize (the last line).
+              // Preserve the stored cursor position (clamped to the new docSize) instead of remapping.
+              if (isFullDocReplace) {
+                const preserved = prev.cursors.map((c) => {
+                  if (!c.cursor) return c;
+                  return {
+                    ...c,
+                    cursor: {
+                      from: Math.max(0, Math.min(c.cursor.from, docSize)),
+                      to: Math.max(0, Math.min(c.cursor.to, docSize)),
+                    },
+                  };
+                });
+                return { cursors: preserved };
+              }
+
+              // Normal incremental edits: remap positions with tr.mapping.map
               const mapped = prev.cursors.map((c) => {
                 if (!c.cursor) return c;
-                const beforeFrom = c.cursor.from;
-                const beforeTo = c.cursor.to;
-                const afterFrom = tr.mapping.map(c.cursor.from);
-                const afterTo = tr.mapping.map(c.cursor.to);
-
-                console.log("[CollabCursor:mapping]", {
-                  userId: c.userId,
-                  displayName: c.displayName,
-                  before: { from: beforeFrom, to: beforeTo },
-                  after: { from: afterFrom, to: afterTo },
-                  docChanged: tr.docChanged,
-                  steps: stepsInfo,
-                });
-
                 try {
                   return {
                     ...c,
                     cursor: {
-                      from: afterFrom,
-                      to: afterTo,
+                      from: tr.mapping.map(c.cursor.from),
+                      to: tr.mapping.map(c.cursor.to),
                     },
                   };
                 } catch {

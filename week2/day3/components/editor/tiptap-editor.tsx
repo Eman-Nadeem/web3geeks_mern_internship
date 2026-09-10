@@ -190,6 +190,11 @@ export function TiptapEditor({
         // Fallback gracefully if node structure shifted
       }
 
+      // Re-broadcast local cursor if focused so collaborators receive authoritative post-sync position immediately
+      if (editor.isFocused && onCursorChangeRef.current) {
+        onCursorChangeRef.current({ from: safeFrom, to: safeTo });
+      }
+
       queueMicrotask(() => {
         isProgrammaticUpdateRef.current = false;
       });
