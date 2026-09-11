@@ -1,0 +1,37 @@
+import { z } from "zod";
+
+export const createDocumentSchema = z.object({
+  title: z
+    .string()
+    .max(255, { message: "Title cannot exceed 255 characters" })
+    .optional()
+    .default("Untitled Document"),
+  content: z.string().optional().default("<p>Start typing your document here...</p>"),
+  jsonContent: z.string().optional().nullable(),
+  status: z.enum(["Draft", "In Review", "Complete"]).optional().default("Draft"),
+  category: z
+    .enum(["Product", "Engineering", "Design", "Marketing", "Architecture", "General"])
+    .optional()
+    .default("General"),
+});
+
+export const updateDocumentSchema = z.object({
+  title: z
+    .string()
+    .max(255, { message: "Title cannot exceed 255 characters" })
+    .optional(),
+  content: z.string().optional(),
+  jsonContent: z.string().optional().nullable(),
+  status: z.enum(["Draft", "In Review", "Complete"]).optional(),
+  category: z
+    .enum(["Product", "Engineering", "Design", "Marketing", "Architecture", "General"])
+    .optional(),
+  baseVersion: z.number().int().nonnegative().optional(),
+});
+
+export const documentIdSchema = z.object({
+  id: z.string().min(1, { message: "Document ID is required" }),
+});
+
+export type CreateDocumentInput = z.infer<typeof createDocumentSchema>;
+export type UpdateDocumentInput = z.infer<typeof updateDocumentSchema>;
