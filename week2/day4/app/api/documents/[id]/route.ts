@@ -102,6 +102,34 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Day 4: Notify socket bridge of new version snapshot created via REST API
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
+    try {
+      await fetch(`${socketUrl}/api/socket/version-created`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-bridge-secret": process.env.INTERNAL_BRIDGE_SECRET || "",
+        },
+        body: JSON.stringify({
+          documentId: id,
+          versionNumber: result.data.version,
+          title: result.data.title,
+          changedBy: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            avatarUrl: user.avatarUrl,
+          },
+          createdAt: result.data.updatedAt ? new Date(result.data.updatedAt).toISOString() : new Date().toISOString(),
+        }),
+      }).catch((err) => {
+        console.warn("[Bridge] Could not contact socket bridge for version-created:", err.message);
+      });
+    } catch {
+      // Non-blocking bridge call
+    }
+
     return NextResponse.json({ data: result.data }, { status: 200 });
   } catch (error) {
     console.error("PUT /api/documents/[id] error:", error);

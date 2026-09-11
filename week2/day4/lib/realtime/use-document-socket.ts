@@ -17,6 +17,7 @@ import {
   CollaboratorRemovedPayload,
   RoleChangedPayload,
   DocumentRestoredPayload,
+  VersionCreatedPayload,
 } from "./events";
 import { getUserColor } from "./colors";
 import { RemoteCursor } from "@/components/editor/collaboration-cursor";
@@ -38,6 +39,7 @@ interface UseDocumentSocketOptions {
   onCollaboratorRemoved?: (payload: CollaboratorRemovedPayload) => void;
   onRoleChanged?: (payload: RoleChangedPayload) => void;
   onDocumentRestored?: (payload: DocumentRestoredPayload) => void;
+  onVersionCreated?: (payload: VersionCreatedPayload) => void;
 }
 
 export function useDocumentSocket({
@@ -54,6 +56,7 @@ export function useDocumentSocket({
   onCollaboratorRemoved,
   onRoleChanged,
   onDocumentRestored,
+  onVersionCreated,
 }: UseDocumentSocketOptions) {
   const { user } = useAuth();
   const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
@@ -96,6 +99,7 @@ export function useDocumentSocket({
   const onCollaboratorRemovedRef = useRef(onCollaboratorRemoved);
   const onRoleChangedRef = useRef(onRoleChanged);
   const onDocumentRestoredRef = useRef(onDocumentRestored);
+  const onVersionCreatedRef = useRef(onVersionCreated);
 
   useEffect(() => {
     onRemoteUpdateRef.current = onRemoteUpdate;
@@ -109,6 +113,7 @@ export function useDocumentSocket({
     onCollaboratorRemovedRef.current = onCollaboratorRemoved;
     onRoleChangedRef.current = onRoleChanged;
     onDocumentRestoredRef.current = onDocumentRestored;
+    onVersionCreatedRef.current = onVersionCreated;
   });
 
   useEffect(() => {
@@ -433,6 +438,17 @@ export function useDocumentSocket({
             setDocumentVersion(data.version);
           }
           onDocumentRestoredRef.current?.(data);
+        }
+      });
+
+      // Day 4: Live Version Snapshot Created
+      socket.on(REALTIME_EVENTS.VERSION_CREATED, (data: VersionCreatedPayload) => {
+        if (data.documentId === documentId) {
+          if (data.versionNumber !== undefined) {
+            documentVersionRef.current = data.versionNumber;
+            setDocumentVersion(data.versionNumber);
+          }
+          onVersionCreatedRef.current?.(data);
         }
       });
 

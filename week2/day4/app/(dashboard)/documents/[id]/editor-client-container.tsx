@@ -224,6 +224,9 @@ export function EditorClientContainer({
     onUserLeft: handleUserLeft,
     onPermissionUpdate: handlePermissionUpdate,
     onDocumentRestored: handleDocumentRestored,
+    onVersionCreated: (vPayload) => {
+      console.log(`[Realtime] Version ${vPayload.versionNumber} snapshot created by ${vPayload.changedBy.name}`);
+    },
     onSyncResponse: (syncData) => {
       if (conflictState) {
         // Protect user's active offline conflict edits from being clobbered during sync response

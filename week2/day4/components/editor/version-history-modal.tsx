@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { AccessRole } from "@/lib/db/documents";
 import { hasPermission } from "@/lib/auth/permissions";
+import { sanitizeHtml } from "@/lib/security/sanitize";
 
 export interface VersionItem {
   id: string;
@@ -296,7 +297,7 @@ export function VersionHistoryModal({
                     <div
                       className="prose prose-slate max-w-none text-slate-700 text-sm leading-relaxed"
                       dangerouslySetInnerHTML={{
-                        __html: selectedVersion.content || "<p><em>Empty content</em></p>",
+                        __html: sanitizeHtml(selectedVersion.content || "<p><em>Empty content</em></p>"),
                       }}
                     />
                   </div>

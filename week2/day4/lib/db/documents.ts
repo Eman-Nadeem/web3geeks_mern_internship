@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { CollaboratorRole, Prisma } from "@prisma/client";
 import { hasPermission } from "../auth/permissions";
+import { sanitizeHtml } from "../security/sanitize";
 
 export const DEMO_USER_ID = "user_demo_123";
 
@@ -199,6 +200,7 @@ export async function createDocument(
       .map((para) => `<p>${para.trim()}</p>`)
       .join("");
   }
+  initialHtml = sanitizeHtml(initialHtml);
 
   return await prisma.document.create({
     data: {
@@ -325,7 +327,7 @@ export async function updateDocument(
         .map((para) => `<p>${para.trim()}</p>`)
         .join("");
     }
-    updatePayload.content = cleanContent;
+    updatePayload.content = sanitizeHtml(cleanContent);
   }
   if (data.jsonContent !== undefined) {
     updatePayload.jsonContent = data.jsonContent;

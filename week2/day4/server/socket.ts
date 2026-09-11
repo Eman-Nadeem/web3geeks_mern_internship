@@ -13,11 +13,13 @@ import {
   collaboratorRemovedSchema,
   roleChangedSchema,
   documentRestoredSchema,
+  versionCreatedSchema,
   getDocumentRoom,
   Collaborator,
   PresenceUser,
   CollaboratorAddedPayload,
   DocumentRestoredPayload,
+  VersionCreatedPayload,
 } from "../lib/realtime/events";
 import { getUserColor } from "../lib/realtime/colors";
 import {
@@ -222,6 +224,26 @@ export const server = http.createServer((req, res) => {
     return;
   }
 
+  // Day 4 Bridge: Version created via REST API
+  if (req.method === "POST" && req.url === "/api/socket/version-created") {
+    if (!verifyInternalBridgeAuth(req, res)) return;
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const payload = JSON.parse(body);
+        const parsed = versionCreatedSchema.parse(payload);
+        broadcastVersionCreated(parsed);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true }));
+      } catch {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Invalid payload" }));
+      }
+    });
+    return;
+  }
+
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify({ status: "healthy", service: "SyncDocs Realtime WebSocket Engine (Day 4)", port: PORT }));
 });
@@ -231,9 +253,21 @@ export const io = new Server(server, {
   pingTimeout: 4000,
   cors: {
     origin: (origin, callback) => {
-      if (!origin || origin.includes("localhost") || origin.includes("127.0.0.1") || origin === ALLOWED_ORIGIN) {
-        return callback(null, true);
+      if (!origin) return callback(null, true);
+
+      try {
+        const url = new URL(origin);
+        const hostname = url.hostname;
+        const isLocal = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+        const isAllowed = origin === ALLOWED_ORIGIN;
+
+        if (isLocal || isAllowed) {
+          return callback(null, true);
+        }
+      } catch {
+        // Invalid origin URL -> fall through to reject
       }
+
       return callback(new Error("CORS origin not allowed"), false);
     },
     methods: ["GET", "POST"],
@@ -262,14 +296,73 @@ interface PresenceEntry {
 const activeRoomUsers = new Map<string, Map<string, PresenceEntry>>();
 
 // In-memory document version tracking for conflict detection (Option A: Last-Write-Wins with version tracking)
-const documentVersions = new Map<string, number>();
-const documentContents = new Map<string, string>();
+export const documentVersions = new Map<string, number>();
+export const documentContents = new Map<string, string>();
 
-function getDocumentVersion(documentId: string): number {
+const hydrationPromises = new Map<string, Promise<{ version: number; content: string } | null>>();
+
+/**
+ * Hydrates in-memory version counter and content from the database on first touch
+ * in this server process (e.g. after a cold restart when Render spins down on idle).
+ * Uses an in-flight promise map per documentId to prevent race conditions during
+ * concurrent first-touches.
+ */
+export async function ensureDocumentHydrated(documentId: string): Promise<{ version: number; content: string }> {
+  // Fast path: already hydrated in memory
+  if (documentVersions.has(documentId) && documentContents.has(documentId)) {
+    return {
+      version: documentVersions.get(documentId)!,
+      content: documentContents.get(documentId)!,
+    };
+  }
+
+  // Deduplicate in-flight hydration requests to avoid concurrent race conditions
+  let promise = hydrationPromises.get(documentId);
+  if (!promise) {
+    promise = (async () => {
+      try {
+        const doc = await getDocumentById(documentId);
+        const dbVersion = doc?.version ?? 1;
+        const dbContent = doc?.content ?? "";
+
+        if (!documentVersions.has(documentId)) {
+          documentVersions.set(documentId, dbVersion);
+        }
+        if (!documentContents.has(documentId)) {
+          documentContents.set(documentId, dbContent);
+        }
+
+        return {
+          version: documentVersions.get(documentId)!,
+          content: documentContents.get(documentId)!,
+        };
+      } catch (err) {
+        console.error(`[Hydration] Failed to hydrate document ${documentId}:`, err);
+        return {
+          version: documentVersions.get(documentId) ?? 1,
+          content: documentContents.get(documentId) ?? "",
+        };
+      } finally {
+        hydrationPromises.delete(documentId);
+      }
+    })();
+    hydrationPromises.set(documentId, promise);
+  }
+
+  const res = await promise;
+  return (
+    res ?? {
+      version: documentVersions.get(documentId) ?? 1,
+      content: documentContents.get(documentId) ?? "",
+    }
+  );
+}
+
+export function getDocumentVersion(documentId: string): number {
   return documentVersions.get(documentId) || 1;
 }
 
-function incrementDocumentVersion(documentId: string): number {
+export function incrementDocumentVersion(documentId: string): number {
   const current = getDocumentVersion(documentId);
   const next = current + 1;
   documentVersions.set(documentId, next);
@@ -395,6 +488,25 @@ export function broadcastDocumentRestored(payload: DocumentRestoredPayload) {
     updatedBy: payload.restoredBy,
     updatedAt: payload.restoredAt,
   });
+
+  // Day 4: Restore creates a new immutable version snapshot row; also emit version_created
+  // so any open Version History modals or audit logs immediately receive the new version.
+  const versionPayload: VersionCreatedPayload = {
+    documentId: payload.documentId,
+    versionNumber: payload.version,
+    title: payload.title,
+    changedBy: payload.restoredBy,
+    createdAt: payload.restoredAt,
+  };
+  broadcastVersionCreated(versionPayload);
+}
+
+/**
+ * Day 4: Broadcasts version_created event to room.
+ */
+export function broadcastVersionCreated(payload: VersionCreatedPayload) {
+  const room = getDocumentRoom(payload.documentId);
+  io.to(room).emit(REALTIME_EVENTS.VERSION_CREATED, payload);
 }
 
 /**
@@ -472,6 +584,9 @@ io.on("connection", (rawSocket) => {
       socket.data.role = accessRole;
       const room = getDocumentRoom(documentId);
       await socket.join(room);
+
+      // Hydrate version counter and content from DB on first touch if server cold-restarted
+      await ensureDocumentHydrated(documentId);
 
       // Track active collaborator in room keyed by socket.id
       if (!activeRoomUsers.has(room)) {
@@ -584,6 +699,7 @@ io.on("connection", (rawSocket) => {
         return;
       }
 
+      await ensureDocumentHydrated(documentId);
       const doc = await getDocumentById(documentId);
       const version = getDocumentVersion(documentId);
       const presence = getUniqueRoomUsers(room);
@@ -671,6 +787,9 @@ io.on("connection", (rawSocket) => {
         return;
       }
 
+      // Ensure document counter and content are hydrated from database if server restarted
+      await ensureDocumentHydrated(documentId);
+
       // Conflict handling Strategy: Option A — Last-Write-Wins with version tracking & logging
       const currentVersion = getDocumentVersion(documentId);
       if (baseVersion !== undefined && baseVersion < currentVersion) {
@@ -703,6 +822,21 @@ io.on("connection", (rawSocket) => {
         updatedBy,
         updatedAt,
       });
+
+      // Day 4: Emit version_created to all room collaborators for the new snapshot
+      const versionPayload: VersionCreatedPayload = {
+        documentId,
+        versionNumber: nextVersion,
+        title: title || "Untitled Document",
+        changedBy: updatedBy,
+        createdAt: updatedAt,
+      };
+      try {
+        versionCreatedSchema.parse(versionPayload);
+        io.to(room).emit(REALTIME_EVENTS.VERSION_CREATED, versionPayload);
+      } catch (vErr) {
+        console.warn("[Socket] Invalid version_created payload:", vErr);
+      }
 
       // Persist resolved state to database asynchronously
       try {
