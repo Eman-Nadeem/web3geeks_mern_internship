@@ -1,4 +1,4 @@
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtmlLib from "sanitize-html";
 
 export const ALLOWED_TAGS = [
   "p", "h1", "h2", "h3", "h4", "h5", "h6",
@@ -10,11 +10,11 @@ export const ALLOWED_TAGS = [
   "a", "img"
 ];
 
-export const ALLOWED_ATTR = [
-  "href", "target", "rel",
-  "src", "alt", "title", "width", "height",
-  "class", "style",
-];
+export const ALLOWED_ATTRIBUTES: sanitizeHtmlLib.IOptions["allowedAttributes"] = {
+  a: ["href", "target", "rel"],
+  img: ["src", "alt", "title", "width", "height"],
+  "*": ["class", "style"],
+};
 
 /**
  * Sanitizes an HTML string to eliminate stored and reflected XSS vectors
@@ -22,31 +22,17 @@ export const ALLOWED_ATTR = [
  * while preserving valid rich-text markup formatted by the Tiptap editor.
  *
  * Safe to execute on both the client (browser DOM) and the server (SSR / API / Tests).
+ * Uses pure JavaScript string parsing (no jsdom dependency) to prevent Vercel SSR ESM bundler crashes.
  */
 export function sanitizeHtml(dirty: string | null | undefined): string {
   if (!dirty || typeof dirty !== "string") {
     return "";
   }
 
-  return DOMPurify.sanitize(dirty, {
-    ALLOWED_TAGS,
-    ALLOWED_ATTR,
-    ALLOW_DATA_ATTR: true,
-    FORBID_TAGS: ["script", "iframe", "object", "embed", "form", "input", "button"],
-    FORBID_ATTR: [
-      "onerror",
-      "onload",
-      "onclick",
-      "onmouseover",
-      "onmouseenter",
-      "onmouseleave",
-      "onfocus",
-      "onblur",
-      "onkeydown",
-      "onkeypress",
-      "onkeyup",
-      "onchange",
-      "onsubmit",
-    ],
+  return sanitizeHtmlLib(dirty, {
+    allowedTags: ALLOWED_TAGS,
+    allowedAttributes: ALLOWED_ATTRIBUTES,
+    allowedSchemes: ["http", "https", "mailto", "tel"],
+    disallowedTagsMode: "discard",
   });
 }
