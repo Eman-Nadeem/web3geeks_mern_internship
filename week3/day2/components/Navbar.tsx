@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -272,7 +272,7 @@ export function Navbar() {
       </div>
 
       {/* 2. Category Nav (Second row directly below top bar, same bg-header, plain text links) */}
-      <div className="border-t border-[var(--border-dark)] bg-[var(--bg-header)]">
+      <div className="border-t border-(--border-dark) bg-(--bg-header)">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex items-center gap-6 sm:gap-8 overflow-x-auto py-2.5 no-scrollbar text-[13px]">
             {CATEGORY_NAV_LINKS.map((link) => {
@@ -283,8 +283,8 @@ export function Navbar() {
                   href={link.href}
                   className={`shrink-0 transition-colors ${
                     isActive
-                      ? 'text-[var(--text-on-dark)] font-semibold'
-                      : 'text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)] font-normal'
+                      ? 'text-(--text-on-dark) font-semibold'
+                      : 'text-(--text-on-dark-muted) hover:text-(--text-on-dark) font-normal'
                   }`}
                 >
                   {link.name}
@@ -297,29 +297,29 @@ export function Navbar() {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden px-4 py-4 space-y-2 border-t border-[var(--border-dark)] bg-[var(--bg-header)]">
+        <div className="md:hidden px-4 py-4 space-y-2 border-t border-(--border-dark) bg-(--bg-header)">
           {CATEGORY_NAV_LINKS.map((link) => (
             <Link
               key={link.name}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className="block py-1.5 text-sm text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)]"
+              className="block py-1.5 text-sm text-(--text-on-dark-muted) hover:text-(--text-on-dark)"
             >
               {link.name}
             </Link>
           ))}
 
-          <div className="pt-3 border-t border-[var(--border-dark)]">
+          <div className="pt-3 border-t border-(--border-dark)">
             {user ? (
               <div className="space-y-2">
-                <div className="text-xs text-[var(--text-on-dark-muted)]">
-                  Signed in as <span className="text-[var(--text-on-dark)] font-semibold">{user.name}</span>
+                <div className="text-xs text-(--text-on-dark-muted)">
+                  Signed in as <span className="text-(--text-on-dark) font-semibold">{user.name}</span>
                 </div>
                 <div className="flex items-center gap-3 pt-1">
                   <Link
                     href="/favorites"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-xs px-2.5 py-1 rounded bg-[var(--bg-canvas)] text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center gap-1.5"
+                    className="text-xs px-2.5 py-1 rounded bg-(--bg-canvas) text-(--text-on-dark-muted) hover:text-(--text-on-dark) border border-(--border-dark) flex items-center gap-1.5"
                   >
                     <Heart className="w-3.5 h-3.5 text-[#1E7A56]" />
                     Favorites ({favoritesCount})
@@ -327,7 +327,7 @@ export function Navbar() {
                   <Link
                     href="/cart"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-xs px-2.5 py-1 rounded bg-[var(--bg-canvas)] text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center gap-1.5"
+                    className="text-xs px-2.5 py-1 rounded bg-(--bg-canvas) text-(--text-on-dark-muted) hover:text-(--text-on-dark) border border-(--border-dark) flex items-center gap-1.5"
                   >
                     <ShoppingCart className="w-3.5 h-3.5 text-[#1E7A56]" />
                     Cart ({cartCount})

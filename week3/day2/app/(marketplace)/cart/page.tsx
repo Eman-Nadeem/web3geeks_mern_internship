@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -38,7 +38,7 @@ export default function CartPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center bg-[var(--bg-canvas)] text-[var(--text-on-dark-muted)]">
+      <div className="min-h-[70vh] flex items-center justify-center bg-(--bg-canvas) text-(--text-on-dark-muted)">
         <div className="flex items-center gap-2 text-sm">
           <div className="w-5 h-5 border-2 border-[#1E7A56] border-t-transparent rounded-full animate-spin" />
           <span>Loading your cart...</span>
@@ -71,18 +71,18 @@ export default function CartPage() {
   };
 
   return (
-    <div className="w-full min-h-[85vh] bg-[var(--bg-canvas)] text-[var(--text-on-dark)] py-10 transition-colors duration-200">
+    <div className="w-full min-h-[85vh] bg-(--bg-canvas) text-(--text-on-dark) py-10 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Header */}
-        <div className="border-b border-[var(--border-dark)] pb-5 flex items-center justify-between">
+        <div className="border-b border-(--border-dark) pb-5 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-on-dark)] flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-(--text-on-dark) flex items-center gap-3">
               <span>Shopping Cart</span>
-              <span className="text-xs px-2.5 py-1 rounded-full bg-[var(--bg-header)] text-[#1E7A56] border border-[var(--border-dark)] font-semibold">
+              <span className="text-xs px-2.5 py-1 rounded-full bg-(--bg-header) text-[#1E7A56] border border-(--border-dark) font-semibold">
                 {cart.length} {cart.length === 1 ? 'item' : 'items'}
               </span>
             </h1>
-            <p className="text-[13px] text-[var(--text-on-dark-muted)] mt-1">
+            <p className="text-[13px] text-(--text-on-dark-muted) mt-1">
               Review your items and complete your multi-vendor purchase.
             </p>
           </div>
@@ -189,7 +189,7 @@ export default function CartPage() {
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="px-3 text-xs font-bold text-[#151A24] min-w-[28px] text-center">
+                        <span className="px-3 text-xs font-bold text-[#151A24] min-w-7 text-center">
                           {item.quantity}
                         </span>
                         <button
@@ -202,7 +202,7 @@ export default function CartPage() {
                       </div>
 
                       {/* Line total */}
-                      <div className="hidden sm:block text-right min-w-[80px]">
+                      <div className="hidden sm:block text-right min-w-20">
                         <div className="text-[16px] font-bold text-[#151A24]">
                           ${(item.price * item.quantity).toFixed(2)}
                         </div>

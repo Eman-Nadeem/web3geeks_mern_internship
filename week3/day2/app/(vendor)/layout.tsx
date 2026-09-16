@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
@@ -33,7 +33,7 @@ export default async function VendorLayout({
   // If user has not created a vendor yet, allow rendering children (e.g. Onboarding page)
   if (!vendor) {
     return (
-      <div className="min-h-screen flex flex-col bg-[var(--bg-canvas)] text-[var(--text-on-dark)] transition-colors duration-200">
+      <div className="min-h-screen flex flex-col bg-(--bg-canvas) text-(--text-on-dark) transition-colors duration-200">
         <Navbar />
         <div className="max-w-4xl mx-auto px-4 py-8 w-full flex-1">
           {children}
@@ -43,7 +43,7 @@ export default async function VendorLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-canvas)] text-[var(--text-on-dark)] transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-(--bg-canvas) text-(--text-on-dark) transition-colors duration-200">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
@@ -74,9 +74,9 @@ export default async function VendorLayout({
         )}
 
         {/* Vendor Header Strip */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-(--surface-card) border border-(--border-dark) shadow-sm">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-xl bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] overflow-hidden flex items-center justify-center font-bold text-emerald-500 text-lg">
+            <div className="w-12 h-12 rounded-xl bg-(--surface-card-subtle) border border-(--border-dark) overflow-hidden flex items-center justify-center font-bold text-emerald-500 text-lg">
               {vendor.logoUrl ? (
                 <img src={vendor.logoUrl} alt={vendor.name} className="w-full h-full object-cover" />
               ) : (
@@ -85,10 +85,10 @@ export default async function VendorLayout({
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-lg font-bold text-[var(--text-on-dark)] tracking-tight">{vendor.name}</h1>
+                <h1 className="text-lg font-bold text-(--text-on-dark) tracking-tight">{vendor.name}</h1>
                 <StatusBadge status={vendor.status} />
               </div>
-              <p className="text-xs text-[var(--text-on-dark-muted)] mt-0.5">
+              <p className="text-xs text-(--text-on-dark-muted) mt-0.5">
                 Vendor ID: <span className="font-mono opacity-75">{vendor.id.slice(0, 8)}...</span> • Slug: <span className="font-mono text-emerald-600 dark:text-emerald-400">{vendor.slug}</span>
               </p>
             </div>
@@ -98,21 +98,21 @@ export default async function VendorLayout({
           <div className="flex items-center gap-2 flex-wrap">
             <Link
               href="/vendor/dashboard"
-              className="px-3 py-1.5 rounded-lg bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-xs font-semibold text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-(--surface-card-subtle) hover:bg-(--border-dark) text-xs font-semibold text-(--text-on-dark) border border-(--border-dark) flex items-center gap-1.5 transition-colors"
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
               Dashboard
             </Link>
             <Link
               href="/vendor/products"
-              className="px-3 py-1.5 rounded-lg bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-xs font-semibold text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-(--surface-card-subtle) hover:bg-(--border-dark) text-xs font-semibold text-(--text-on-dark) border border-(--border-dark) flex items-center gap-1.5 transition-colors"
             >
               <Package className="w-3.5 h-3.5" />
               Products
             </Link>
             <Link
               href="/vendor/inventory"
-              className="px-3 py-1.5 rounded-lg bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-xs font-semibold text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-(--surface-card-subtle) hover:bg-(--border-dark) text-xs font-semibold text-(--text-on-dark) border border-(--border-dark) flex items-center gap-1.5 transition-colors"
             >
               <Boxes className="w-3.5 h-3.5 text-cyan-500" />
               Inventory
@@ -126,7 +126,7 @@ export default async function VendorLayout({
             </Link>
             <Link
               href="/vendor/profile"
-              className="px-3 py-1.5 rounded-lg bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-xs font-semibold text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-(--surface-card-subtle) hover:bg-(--border-dark) text-xs font-semibold text-(--text-on-dark) border border-(--border-dark) flex items-center gap-1.5 transition-colors"
             >
               <Settings className="w-3.5 h-3.5" />
               Store Settings
