@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  /* Nexus Market Design System Color Tokens */
+  --bg-canvas: #1B2436;
+  --bg-header: #12192A;
+  --bg-hero-start: #0E2B24;
+  --bg-hero-end: #153229;
+  --surface-card: #FFFFFF;
+  --accent: #1E7A56;
+  --accent-hover: #186347;
+  --text-on-dark: #FFFFFF;
+  --text-on-dark-muted: #A9B2C3;
+  --text-on-card: #151A24;
+  --text-on-card-muted: #6B7280;
+  --rating-star: #F5A623;
+  --badge: #1E7A56;
+  --border-dark: #232E44;
+  --border-card: #E5E7EB;
+}
+
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-on-dark);
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar matching dark chrome */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-header);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2A364F;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3B4B6E;
+}
