@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { CartWishlistProvider } from '@/components/CartWishlistContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,9 +18,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark h-full antialiased" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen flex flex-col bg-[var(--bg-page)] text-[var(--text-main)] transition-colors duration-200`}>
+      <body className={`${inter.className} min-h-screen flex flex-col bg-(--bg-page) text-(--text-main) transition-colors duration-200`}>
         <ThemeProvider>
-          {children}
+          <CartWishlistProvider>
+            {children}
+          </CartWishlistProvider>
         </ThemeProvider>
       </body>
     </html>

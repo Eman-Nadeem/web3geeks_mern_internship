@@ -68,7 +68,7 @@ export default async function HomePage() {
   ];
 
   return (
-    <div className="space-y-10 pb-20 bg-[#1B2436] text-white">
+    <div className="w-full bg-[var(--bg-canvas)] text-[var(--text-on-dark)] space-y-10 pb-20 transition-colors duration-200">
       {/* 1. Hero Banner (bg-hero gradient with bleeding product photography) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0E2B24] to-[#153229] border border-[#1E4338] min-h-[300px] sm:min-h-[340px] flex items-center shadow-lg">
@@ -138,7 +138,7 @@ export default async function HomePage() {
 
       {/* 2. Popular Categories (Row of pill-shaped white buttons, equal width, outline icon in accent) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-[20px] font-bold text-white tracking-tight mb-4">
+        <h2 className="text-[20px] font-bold text-[var(--text-on-dark)] tracking-tight mb-4">
           Popular Categories
         </h2>
 
@@ -162,12 +162,12 @@ export default async function HomePage() {
       {/* 3. Trending Products (The core repeating unit: ProductCard) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[20px] font-bold text-white tracking-tight">
+          <h2 className="text-[20px] font-bold text-[var(--text-on-dark)] tracking-tight">
             Trending Products
           </h2>
           <Link
             href="/products"
-            className="text-[13px] text-[#A9B2C3] hover:text-white transition-colors"
+            className="text-[13px] text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)] transition-colors"
           >
             See all products →
           </Link>
@@ -185,6 +185,7 @@ export default async function HomePage() {
                 key={product.id}
                 id={product.id}
                 name={product.name}
+                slug={product.slug}
                 price={product.price}
                 imageUrl={product.imageUrl}
                 category={product.category}
@@ -201,12 +202,12 @@ export default async function HomePage() {
       {/* 4. Verified Stores / Merchant Spotlight */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[20px] font-bold text-white tracking-tight">
+          <h2 className="text-[20px] font-bold text-[var(--text-on-dark)] tracking-tight">
             Verified Independent Stores
           </h2>
           <Link
             href="/vendors"
-            className="text-[13px] text-[#A9B2C3] hover:text-white transition-colors"
+            className="text-[13px] text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)] transition-colors"
           >
             View all merchants →
           </Link>
@@ -225,7 +226,7 @@ export default async function HomePage() {
               >
                 <div>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-[#12192A] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    <div className="w-12 h-12 rounded-lg bg-[var(--bg-header)] text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center justify-center font-bold text-sm shrink-0">
                       {vendor.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div>

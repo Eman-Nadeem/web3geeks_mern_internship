@@ -16,6 +16,8 @@ import {
   Store,
   ShieldCheck
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { useCartWishlist } from '@/components/CartWishlistContext';
 
 interface CurrentUser {
   id: string;
@@ -51,6 +53,7 @@ const CATEGORY_NAV_LINKS = [
 export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { cartCount, favoritesCount } = useCartWishlist();
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -87,7 +90,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#12192A] border-b border-[#232E44] text-white">
+    <header className="sticky top-0 z-50 bg-(--bg-header) border-b border-(--border-dark) text-(--text-on-dark) transition-colors duration-200">
       {/* 1. Top Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4 h-16">
@@ -97,10 +100,10 @@ export function Navbar() {
               <img 
                 src="/logo.png" 
                 alt="Nexus Market Logo" 
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain" 
               />
             </div>
-            <span className="font-extrabold text-[17px] tracking-tight uppercase text-white font-sans">
+            <span className="font-extrabold text-[17px] tracking-tight uppercase text-(--text-on-dark) font-sans">
               NEXUS MARKET
             </span>
           </Link>
@@ -151,12 +154,12 @@ export function Navbar() {
             {!loading && user ? (
               <div className="flex items-center gap-2.5 text-[13px]">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[#1B2436] border border-[#232E44] flex items-center justify-center text-[12px] font-bold text-[#1E7A56]">
+                  <div className="w-8 h-8 rounded-full bg-(--bg-canvas) border border-(--border-dark) flex items-center justify-center text-[12px] font-bold text-[#1E7A56]">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="hidden lg:flex flex-col text-left leading-tight">
-                    <span className="text-[11px] text-[#A9B2C3]">Hello,</span>
-                    <span className="font-semibold text-white truncate max-w-[100px]">{user.name}</span>
+                    <span className="text-[11px] text-(--text-on-dark-muted)">Hello,</span>
+                    <span className="font-semibold text-(--text-on-dark) truncate max-w-25">{user.name}</span>
                   </div>
                 </div>
 
@@ -164,7 +167,7 @@ export function Navbar() {
                 {user.role === 'VENDOR' && (
                   <Link
                     href="/vendor/dashboard"
-                    className="hidden xl:inline-flex text-xs px-2.5 py-1 rounded bg-[#1B2436] text-[#A9B2C3] hover:text-white border border-[#232E44]"
+                    className="hidden xl:inline-flex text-xs px-2.5 py-1 rounded bg-(--bg-canvas) text-(--text-on-dark-muted) hover:text-(--text-on-dark) border border-(--border-dark)"
                   >
                     Dashboard
                   </Link>
@@ -172,7 +175,7 @@ export function Navbar() {
                 {user.role === 'ADMIN' && (
                   <Link
                     href="/admin/vendors"
-                    className="hidden xl:inline-flex text-xs px-2.5 py-1 rounded bg-[#1B2436] text-[#A9B2C3] hover:text-white border border-[#232E44]"
+                    className="hidden xl:inline-flex text-xs px-2.5 py-1 rounded bg-(--bg-canvas) text-(--text-on-dark-muted) hover:text-(--text-on-dark) border border-(--border-dark)"
                   >
                     Admin
                   </Link>
@@ -181,7 +184,7 @@ export function Navbar() {
                 <button
                   onClick={handleLogout}
                   title="Sign Out"
-                  className="p-1 text-[#A9B2C3] hover:text-white transition-colors"
+                  className="p-1 text-(--text-on-dark-muted) hover:text-(--text-on-dark) transition-colors cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -189,41 +192,53 @@ export function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="hidden sm:flex items-center gap-2 text-[13px] text-white hover:text-[#A9B2C3] transition-colors"
+                className="hidden sm:flex items-center gap-2 text-[13px] text-(--text-on-dark) hover:text-(--text-on-dark-muted) transition-colors"
               >
-                <div className="w-8 h-8 rounded-full bg-[#1B2436] border border-[#232E44] flex items-center justify-center">
-                  <User className="w-4 h-4 text-[#A9B2C3]" />
+                <div className="w-8 h-8 rounded-full bg-(--bg-canvas) border border-(--border-dark) flex items-center justify-center">
+                  <User className="w-4 h-4 text-(--text-on-dark-muted)" />
                 </div>
                 <div className="flex flex-col text-left leading-tight">
-                  <span className="text-[11px] text-[#A9B2C3]">Sign In</span>
+                  <span className="text-[11px] text-(--text-on-dark-muted)">Sign In</span>
                   <span className="font-semibold">Account</span>
                 </div>
               </Link>
             )}
 
-            {/* Wishlist Icon with Green Count Badge */}
-            <Link
-              href="/products"
-              title="Wishlist"
-              className="relative p-1.5 text-white hover:text-[#A9B2C3] transition-colors"
-            >
-              <Heart className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1.5 w-4 h-4 rounded-full bg-[#1E7A56] text-white text-[10px] font-bold flex items-center justify-center">
-                3
-              </span>
-            </Link>
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
-            {/* Cart Icon with Green Count Badge */}
-            <Link
-              href="/products"
-              title="Cart"
-              className="relative p-1.5 text-white hover:text-[#A9B2C3] transition-colors"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1.5 w-4 h-4 rounded-full bg-[#1E7A56] text-white text-[10px] font-bold flex items-center justify-center">
-                5
-              </span>
-            </Link>
+            {/* Wishlist & Cart Icons (Strictly shown ONLY when logged in) */}
+            {!loading && user && (
+              <>
+                {/* Wishlist Icon with Green Count Badge */}
+                <Link
+                  href="/favorites"
+                  title="Favorites & Wishlist"
+                  className="relative p-1.5 text-(--text-on-dark) hover:text-(--text-on-dark-muted) transition-colors"
+                >
+                  <Heart className="w-5 h-5" />
+                  {favoritesCount > 0 && (
+                    <span className="absolute -top-1 -right-1.5 w-4 h-4 rounded-full bg-[#1E7A56] text-white text-[10px] font-bold flex items-center justify-center">
+                      {favoritesCount}
+                    </span>
+                  )}
+                </Link>
+
+                {/* Cart Icon with Green Count Badge */}
+                <Link
+                  href="/cart"
+                  title="Shopping Cart"
+                  className="relative p-1.5 text-(--text-on-dark) hover:text-(--text-on-dark-muted) transition-colors"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1.5 w-4 h-4 rounded-full bg-[#1E7A56] text-white text-[10px] font-bold flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
+                </Link>
+              </>
+            )}
 
             {/* Mobile Hamburger */}
             <button
@@ -257,7 +272,7 @@ export function Navbar() {
       </div>
 
       {/* 2. Category Nav (Second row directly below top bar, same bg-header, plain text links) */}
-      <div className="border-t border-[#232E44] bg-[#12192A]">
+      <div className="border-t border-[var(--border-dark)] bg-[var(--bg-header)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex items-center gap-6 sm:gap-8 overflow-x-auto py-2.5 no-scrollbar text-[13px]">
             {CATEGORY_NAV_LINKS.map((link) => {
@@ -268,8 +283,8 @@ export function Navbar() {
                   href={link.href}
                   className={`shrink-0 transition-colors ${
                     isActive
-                      ? 'text-white font-semibold'
-                      : 'text-[#A9B2C3] hover:text-white font-normal'
+                      ? 'text-[var(--text-on-dark)] font-semibold'
+                      : 'text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)] font-normal'
                   }`}
                 >
                   {link.name}
@@ -282,23 +297,41 @@ export function Navbar() {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden px-4 py-4 space-y-2 border-t border-[#232E44] bg-[#12192A]">
+        <div className="md:hidden px-4 py-4 space-y-2 border-t border-[var(--border-dark)] bg-[var(--bg-header)]">
           {CATEGORY_NAV_LINKS.map((link) => (
             <Link
               key={link.name}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className="block py-1.5 text-sm text-[#A9B2C3] hover:text-white"
+              className="block py-1.5 text-sm text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)]"
             >
               {link.name}
             </Link>
           ))}
 
-          <div className="pt-3 border-t border-[#232E44]">
+          <div className="pt-3 border-t border-[var(--border-dark)]">
             {user ? (
               <div className="space-y-2">
-                <div className="text-xs text-[#A9B2C3]">
-                  Signed in as <span className="text-white font-semibold">{user.name}</span>
+                <div className="text-xs text-[var(--text-on-dark-muted)]">
+                  Signed in as <span className="text-[var(--text-on-dark)] font-semibold">{user.name}</span>
+                </div>
+                <div className="flex items-center gap-3 pt-1">
+                  <Link
+                    href="/favorites"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-xs px-2.5 py-1 rounded bg-[var(--bg-canvas)] text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center gap-1.5"
+                  >
+                    <Heart className="w-3.5 h-3.5 text-[#1E7A56]" />
+                    Favorites ({favoritesCount})
+                  </Link>
+                  <Link
+                    href="/cart"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-xs px-2.5 py-1 rounded bg-[var(--bg-canvas)] text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center gap-1.5"
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5 text-[#1E7A56]" />
+                    Cart ({cartCount})
+                  </Link>
                 </div>
                 {user.role === 'VENDOR' && (
                   <Link
@@ -323,7 +356,7 @@ export function Navbar() {
                     setMobileMenuOpen(false);
                     handleLogout();
                   }}
-                  className="text-xs text-rose-400 font-semibold"
+                  className="text-xs text-rose-400 font-semibold cursor-pointer"
                 >
                   Sign Out
                 </button>

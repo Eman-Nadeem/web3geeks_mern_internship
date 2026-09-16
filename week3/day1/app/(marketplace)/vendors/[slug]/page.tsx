@@ -31,13 +31,13 @@ export default async function VendorStorefrontPage({ params }: VendorStorefrontP
   }
 
   return (
-    <div className="space-y-10 pb-20 bg-[#1B2436] text-white min-h-[85vh]">
+    <div className="w-full space-y-10 pb-20 bg-[var(--bg-canvas)] text-[var(--text-on-dark)] min-h-[85vh] transition-colors duration-200">
       {/* 1. Reused Hero Banner Pattern (from homepage spec) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
         <div className="mb-3">
           <Link
             href="/vendors"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#A9B2C3] hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to All Stores
@@ -99,11 +99,11 @@ export default async function VendorStorefrontPage({ params }: VendorStorefrontP
 
       {/* 2. Store Products Grid (Reusing exact ProductCard) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex items-center justify-between border-b border-[#232E44] pb-4">
-          <h2 className="text-[20px] font-bold text-white tracking-tight">
+        <div className="flex items-center justify-between border-b border-[var(--border-dark)] pb-4">
+          <h2 className="text-[20px] font-bold text-[var(--text-on-dark)] tracking-tight">
             Store Catalog
           </h2>
-          <span className="text-xs text-[#A9B2C3]">
+          <span className="text-xs text-[var(--text-on-dark-muted)]">
             Showing all active products by {vendor.name}
           </span>
         </div>
@@ -121,6 +121,7 @@ export default async function VendorStorefrontPage({ params }: VendorStorefrontP
                 key={product.id}
                 id={product.id}
                 name={product.name}
+                slug={product.slug}
                 price={product.price}
                 imageUrl={product.imageUrl}
                 category={product.category}

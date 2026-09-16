@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/wishlist',
+        destination: '/favorites',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
