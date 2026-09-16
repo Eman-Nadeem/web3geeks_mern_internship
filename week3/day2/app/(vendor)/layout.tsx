@@ -74,9 +74,9 @@ export default async function VendorLayout({
         )}
 
         {/* Vendor Header Strip */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] shadow-sm">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center font-bold text-emerald-400 text-lg">
+            <div className="w-12 h-12 rounded-xl bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] overflow-hidden flex items-center justify-center font-bold text-emerald-500 text-lg">
               {vendor.logoUrl ? (
                 <img src={vendor.logoUrl} alt={vendor.name} className="w-full h-full object-cover" />
               ) : (
@@ -85,11 +85,11 @@ export default async function VendorLayout({
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-lg font-bold text-white tracking-tight">{vendor.name}</h1>
+                <h1 className="text-lg font-bold text-[var(--text-on-dark)] tracking-tight">{vendor.name}</h1>
                 <StatusBadge status={vendor.status} />
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Vendor ID: <span className="font-mono text-slate-500">{vendor.id.slice(0, 8)}...</span> • Slug: <span className="font-mono text-emerald-400/80">{vendor.slug}</span>
+              <p className="text-xs text-[var(--text-on-dark-muted)] mt-0.5">
+                Vendor ID: <span className="font-mono opacity-75">{vendor.id.slice(0, 8)}...</span> • Slug: <span className="font-mono text-emerald-600 dark:text-emerald-400">{vendor.slug}</span>
               </p>
             </div>
           </div>
@@ -98,35 +98,35 @@ export default async function VendorLayout({
           <div className="flex items-center gap-2 flex-wrap">
             <Link
               href="/vendor/dashboard"
-              className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-xs font-semibold text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center gap-1.5 transition-colors"
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
               Dashboard
             </Link>
             <Link
               href="/vendor/products"
-              className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-xs font-semibold text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center gap-1.5 transition-colors"
             >
               <Package className="w-3.5 h-3.5" />
               Products
             </Link>
             <Link
               href="/vendor/inventory"
-              className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-xs font-semibold text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center gap-1.5 transition-colors"
             >
-              <Boxes className="w-3.5 h-3.5 text-cyan-400" />
+              <Boxes className="w-3.5 h-3.5 text-cyan-500" />
               Inventory
             </Link>
             <Link
               href="/vendor/products/new"
-              className="px-3 py-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-800/60 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
             >
               <PlusCircle className="w-3.5 h-3.5" />
               Add Product
             </Link>
             <Link
               href="/vendor/profile"
-              className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-xs font-semibold text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center gap-1.5 transition-colors"
             >
               <Settings className="w-3.5 h-3.5" />
               Store Settings
@@ -135,7 +135,7 @@ export default async function VendorLayout({
               <Link
                 href={`/vendors/${vendor.slug}`}
                 target="_blank"
-                className="px-3 py-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/60 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                className="px-3 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 Live Storefront

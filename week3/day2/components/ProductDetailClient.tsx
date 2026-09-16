@@ -311,8 +311,8 @@ export function ProductDetailClient({ product }: ProductDetailProps) {
 
             {/* Variant Selectors */}
             {product.variants.length > 0 && optionKeys.length > 0 && (
-              <div className="p-4 rounded-xl bg-slate-900/40 border border-[var(--border-dark)] space-y-4">
-                <div className="flex items-center gap-2 text-xs font-semibold text-white uppercase tracking-wider">
+              <div className="p-4 rounded-xl bg-[var(--surface-card)] border border-[var(--border-dark)] space-y-4">
+                <div className="flex items-center gap-2 text-xs font-semibold text-[var(--text-on-dark)] uppercase tracking-wider">
                   <Layers className="w-3.5 h-3.5 text-[#1E7A56]" />
                   <span>Choose Variant Options</span>
                 </div>
@@ -328,8 +328,8 @@ export function ProductDetailClient({ product }: ProductDetailProps) {
 
                   return (
                     <div key={key} className="space-y-1.5">
-                      <label className="text-xs text-slate-300 font-medium">
-                        {key}: <span className="font-bold text-white">{selectedOptions[key] || 'Select'}</span>
+                      <label className="text-xs text-[var(--text-on-dark-muted)] font-medium">
+                        {key}: <span className="font-bold text-[var(--text-on-dark)]">{selectedOptions[key] || 'Select'}</span>
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {values.map((val) => {
@@ -342,7 +342,7 @@ export function ProductDetailClient({ product }: ProductDetailProps) {
                               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                                 isSelected
                                   ? 'bg-[#1E7A56] text-white shadow-xs ring-2 ring-[#1E7A56]/50'
-                                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                                  : 'bg-[var(--surface-card-subtle)] text-[var(--text-on-dark)] hover:border-emerald-500 border border-[var(--border-dark)]'
                               }`}
                             >
                               {val}
@@ -389,11 +389,11 @@ export function ProductDetailClient({ product }: ProductDetailProps) {
                 type="button"
                 onClick={handleToggleFavorite}
                 aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
-                className="p-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition-colors cursor-pointer"
+                className="p-3.5 rounded-xl bg-[var(--surface-card-subtle)] hover:bg-[var(--surface-card)] border border-[var(--border-dark)] text-[var(--text-on-dark)] transition-colors cursor-pointer"
               >
                 <Heart
                   className={`w-5 h-5 ${
-                    favorited ? 'fill-[#1E7A56] text-[#1E7A56]' : 'text-slate-400'
+                    favorited ? 'fill-[#1E7A56] text-[#1E7A56]' : 'text-[var(--text-on-dark-muted)]'
                   }`}
                 />
               </button>
@@ -428,7 +428,7 @@ export function ProductDetailClient({ product }: ProductDetailProps) {
             </div>
 
             {/* Owning Vendor Info Card (SAFE: strictly NO vendor email/phone) */}
-            <div className="rounded-xl bg-white p-5 border border-[#E5E7EB] text-[#151A24] space-y-3 shadow-xs">
+            <div className="rounded-xl bg-[var(--surface-card)] p-5 border border-[var(--border-dark)] text-[var(--text-on-dark)] space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[var(--bg-header)] text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center justify-center font-bold text-sm shrink-0">
@@ -439,10 +439,10 @@ export function ProductDetailClient({ product }: ProductDetailProps) {
                     )}
                   </div>
                   <div>
-                    <h3 className="text-[14px] font-bold text-[#151A24]">
+                    <h3 className="text-[14px] font-bold text-[var(--text-on-dark)]">
                       {product.vendor.name}
                     </h3>
-                    <span className="text-[11px] text-[#6B7280]">
+                    <span className="text-[11px] text-[var(--text-on-dark-muted)]">
                       Verified Independent Merchant
                     </span>
                   </div>
@@ -450,13 +450,13 @@ export function ProductDetailClient({ product }: ProductDetailProps) {
               </div>
 
               {product.vendor.description && (
-                <p className="text-[12px] text-[#6B7280] line-clamp-2">
+                <p className="text-[12px] text-[var(--text-on-dark-muted)] line-clamp-2">
                   {product.vendor.description}
                 </p>
               )}
 
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-[#6B7280]">Independent Seller Catalog</span>
+              <div className="pt-2 border-t border-[var(--border-dark)] flex items-center justify-between text-xs">
+                <span className="text-[var(--text-on-dark-muted)]">Independent Seller Catalog</span>
                 <Link
                   href={`/vendors/${product.vendor.slug}`}
                   className="font-semibold text-[#1E7A56] hover:text-[#186347] transition-colors"

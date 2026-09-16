@@ -17,57 +17,57 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-white tracking-tight">System Status & Metrics</h2>
-        <p className="text-xs text-slate-400 mt-1">Platform-wide statistics and pending operational tasks</p>
+        <h2 className="text-2xl font-bold text-[var(--text-on-dark)] tracking-tight">System Status & Metrics</h2>
+        <p className="text-xs text-[var(--text-on-dark-muted)] mt-1">Platform-wide statistics and pending operational tasks</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] shadow-xs space-y-2">
+          <div className="flex items-center justify-between text-[var(--text-on-dark-muted)]">
             <span className="text-xs font-semibold uppercase tracking-wider">Pending Approvals</span>
-            <Clock className="w-4 h-4 text-amber-400" />
+            <Clock className="w-4 h-4 text-amber-500" />
           </div>
-          <div className="text-3xl font-extrabold text-amber-400">{pendingVendors}</div>
+          <div className="text-3xl font-extrabold text-amber-500">{pendingVendors}</div>
           <Link
-            href="/admin/vendors?status=pending"
-            className="text-[11px] text-amber-400/90 hover:underline inline-flex items-center gap-1 font-semibold pt-1"
+            href="/admin/vendors"
+            className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline inline-flex items-center gap-1 font-semibold pt-1"
           >
             Review applications &rarr;
           </Link>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] shadow-xs space-y-2">
+          <div className="flex items-center justify-between text-[var(--text-on-dark-muted)]">
             <span className="text-xs font-semibold uppercase tracking-wider">Total Vendors</span>
-            <Store className="w-4 h-4 text-emerald-400" />
+            <Store className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="text-3xl font-extrabold text-white">{totalVendors}</div>
-          <span className="text-[11px] text-slate-500 block">Registered stores</span>
+          <div className="text-3xl font-extrabold text-[var(--text-on-dark)]">{totalVendors}</div>
+          <span className="text-[11px] text-[var(--text-on-dark-muted)] block">Registered stores</span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] shadow-xs space-y-2">
+          <div className="flex items-center justify-between text-[var(--text-on-dark-muted)]">
             <span className="text-xs font-semibold uppercase tracking-wider">Total Products</span>
-            <Package className="w-4 h-4 text-indigo-400" />
+            <Package className="w-4 h-4 text-indigo-500" />
           </div>
-          <div className="text-3xl font-extrabold text-white">{totalProducts}</div>
-          <span className="text-[11px] text-slate-500 block">Multi-vendor catalog items</span>
+          <div className="text-3xl font-extrabold text-[var(--text-on-dark)]">{totalProducts}</div>
+          <span className="text-[11px] text-[var(--text-on-dark-muted)] block">Multi-vendor catalog items</span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] shadow-xs space-y-2">
+          <div className="flex items-center justify-between text-[var(--text-on-dark-muted)]">
             <span className="text-xs font-semibold uppercase tracking-wider">Total Users</span>
-            <Users className="w-4 h-4 text-purple-400" />
+            <Users className="w-4 h-4 text-purple-500" />
           </div>
-          <div className="text-3xl font-extrabold text-white">{totalUsers}</div>
-          <span className="text-[11px] text-slate-500 block">Customers & merchant owners</span>
+          <div className="text-3xl font-extrabold text-[var(--text-on-dark)]">{totalUsers}</div>
+          <span className="text-[11px] text-[var(--text-on-dark-muted)] block">Customers & merchant owners</span>
         </div>
       </div>
 
-      <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
-        <div className="space-y-1">
-          <h3 className="text-base font-bold text-white">Vendor Review & Approval Queue</h3>
-          <p className="text-xs text-slate-400">
+      <div className="p-6 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="space-y-1 text-center sm:text-left">
+          <h3 className="text-base font-bold text-[var(--text-on-dark)]">Vendor Review & Approval Queue</h3>
+          <p className="text-xs text-[var(--text-on-dark-muted)]">
             {pendingVendors > 0
               ? `There are ${pendingVendors} merchant stores awaiting your approval.`
               : 'All vendor store applications have been reviewed.'}

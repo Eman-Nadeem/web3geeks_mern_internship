@@ -108,15 +108,15 @@ export default function AdminVendorsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Vendor Approval Queue & Management</h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <h2 className="text-2xl font-bold text-[var(--text-on-dark)] tracking-tight">Vendor Approval Queue & Management</h2>
+          <p className="text-xs text-[var(--text-on-dark-muted)] mt-1">
             Review onboarding requests, approve authentic merchants, or suspend non-compliant vendors.
           </p>
         </div>
 
         <button
           onClick={fetchVendors}
-          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 flex items-center gap-1.5 transition-colors self-start sm:self-auto"
+          className="px-3 py-1.5 rounded-lg bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-xs font-semibold text-[var(--text-on-dark)] border border-[var(--border-dark)] flex items-center gap-1.5 transition-colors self-start sm:self-auto cursor-pointer"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           Refresh List
@@ -127,39 +127,39 @@ export default function AdminVendorsPage() {
         <div
           className={`p-4 rounded-xl text-xs flex items-center gap-2 ${
             message.type === 'success'
-              ? 'bg-emerald-950/60 border border-emerald-800 text-emerald-300'
-              : 'bg-rose-950/60 border border-rose-800 text-rose-300'
+              ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+              : 'bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400'
           }`}
         >
           {message.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
           ) : (
-            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+            <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
           )}
           <span>{message.text}</span>
         </div>
       )}
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+      <div className="flex items-center gap-2 border-b border-[var(--border-dark)] pb-3 overflow-x-auto">
         {['ALL', 'PENDING', 'ACTIVE', 'SUSPENDED', 'REJECTED'].map((st) => {
           const count = vendors.filter((v) => (st === 'ALL' ? true : v.status === st)).length;
           return (
             <button
               key={st}
               onClick={() => setFilter(st)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer ${
                 filter === st
-                  ? 'bg-slate-800 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)] hover:bg-[var(--surface-card-subtle)]'
               }`}
             >
               <span>{st}</span>
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] ${
                   st === 'PENDING' && count > 0
-                    ? 'bg-amber-500/20 text-amber-300 font-bold'
-                    : 'bg-slate-900 text-slate-400'
+                    ? 'bg-amber-500/20 text-amber-500 font-bold'
+                    : 'bg-[var(--surface-card-subtle)] text-[var(--text-on-dark-muted)]'
                 }`}
               >
                 {count}
@@ -170,18 +170,18 @@ export default function AdminVendorsPage() {
       </div>
 
       {loading ? (
-        <div className="py-20 text-center text-xs text-slate-500">Loading vendor queue...</div>
+        <div className="py-20 text-center text-xs text-[var(--text-on-dark-muted)]">Loading vendor queue...</div>
       ) : filteredVendors.length === 0 ? (
-        <div className="py-16 rounded-2xl bg-slate-900/40 border border-slate-800 text-center space-y-2">
-          <Store className="w-10 h-10 text-slate-600 mx-auto" />
-          <h3 className="text-sm font-semibold text-slate-300">No vendors found for this filter</h3>
-          <p className="text-xs text-slate-500">Try selecting another filter tab above.</p>
+        <div className="py-16 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] text-center space-y-2">
+          <Store className="w-10 h-10 text-[var(--text-on-dark-muted)] mx-auto opacity-40" />
+          <h3 className="text-sm font-semibold text-[var(--text-on-dark)]">No vendors found for this filter</h3>
+          <p className="text-xs text-[var(--text-on-dark-muted)]">Try selecting another filter tab above.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl">
+        <div className="overflow-hidden rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950/80 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-800">
+              <thead className="bg-[var(--surface-card-subtle)] text-[11px] text-[var(--text-on-dark-muted)] uppercase tracking-wider border-b border-[var(--border-dark)]">
                 <tr>
                   <th className="p-4 font-semibold">Store / Brand</th>
                   <th className="p-4 font-semibold">Owner Contact</th>
@@ -191,12 +191,12 @@ export default function AdminVendorsPage() {
                   <th className="p-4 font-semibold text-right">Approval Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-[var(--border-dark)]">
                 {filteredVendors.map((vendor) => (
-                  <tr key={vendor.id} className="hover:bg-slate-800/30 transition-colors">
+                  <tr key={vendor.id} className="hover:bg-[var(--surface-card-subtle)] transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center font-bold text-emerald-400 shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] overflow-hidden flex items-center justify-center font-bold text-emerald-500 shrink-0">
                           {vendor.logoUrl ? (
                             <img src={vendor.logoUrl} alt={vendor.name} className="w-full h-full object-cover" />
                           ) : (
@@ -204,8 +204,8 @@ export default function AdminVendorsPage() {
                           )}
                         </div>
                         <div>
-                          <div className="font-bold text-white text-xs">{vendor.name}</div>
-                          <span className="text-[11px] font-mono text-emerald-400/80 block">
+                          <div className="font-bold text-[var(--text-on-dark)] text-xs">{vendor.name}</div>
+                          <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 block">
                             /vendors/{vendor.slug}
                           </span>
                         </div>
@@ -213,21 +213,21 @@ export default function AdminVendorsPage() {
                     </td>
 
                     <td className="p-4 space-y-0.5">
-                      <div className="flex items-center gap-1.5 text-slate-200 font-medium">
-                        <User className="w-3.5 h-3.5 text-slate-500" />
+                      <div className="flex items-center gap-1.5 text-[var(--text-on-dark)] font-medium">
+                        <User className="w-3.5 h-3.5 text-[var(--text-on-dark-muted)]" />
                         <span>{vendor.owner.name}</span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
-                        <Mail className="w-3.5 h-3.5 text-slate-500" />
+                      <div className="flex items-center gap-1.5 text-[var(--text-on-dark-muted)] text-[11px]">
+                        <Mail className="w-3.5 h-3.5 text-[var(--text-on-dark-muted)]" />
                         <span>{vendor.email}</span>
                       </div>
                     </td>
 
-                    <td className="p-4 text-slate-300 font-semibold">
+                    <td className="p-4 text-[var(--text-on-dark)] font-semibold">
                       {vendor._count.products} products
                     </td>
 
-                    <td className="p-4 text-slate-400 text-[11px]">
+                    <td className="p-4 text-[var(--text-on-dark-muted)] text-[11px]">
                       {new Date(vendor.createdAt).toLocaleDateString()}
                     </td>
 
@@ -243,7 +243,7 @@ export default function AdminVendorsPage() {
                             <button
                               onClick={() => handleStatusChange(vendor.id, vendor.name, 'ACTIVE')}
                               disabled={processingId === vendor.id}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-[11px] flex items-center gap-1 transition-colors disabled:opacity-50 shadow-sm"
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-[11px] flex items-center gap-1 transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
                             >
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               Approve
@@ -251,7 +251,7 @@ export default function AdminVendorsPage() {
                             <button
                               onClick={() => handleStatusChange(vendor.id, vendor.name, 'REJECTED')}
                               disabled={processingId === vendor.id}
-                              className="px-3 py-1.5 rounded-lg bg-red-950 hover:bg-red-900 text-red-300 border border-red-800 text-[11px] font-semibold flex items-center gap-1 transition-colors disabled:opacity-50"
+                              className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 text-[11px] font-semibold flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
                             >
                               <XCircle className="w-3.5 h-3.5" />
                               Reject
@@ -263,7 +263,7 @@ export default function AdminVendorsPage() {
                           <button
                             onClick={() => handleStatusChange(vendor.id, vendor.name, 'SUSPENDED')}
                             disabled={processingId === vendor.id}
-                            className="px-3 py-1.5 rounded-lg bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 text-[11px] font-semibold flex items-center gap-1 transition-colors disabled:opacity-50"
+                            className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 text-[11px] font-semibold flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
                           >
                             <AlertTriangle className="w-3.5 h-3.5" />
                             Suspend
@@ -274,7 +274,7 @@ export default function AdminVendorsPage() {
                           <button
                             onClick={() => handleStatusChange(vendor.id, vendor.name, 'ACTIVE')}
                             disabled={processingId === vendor.id}
-                            className="px-3 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 text-[11px] font-semibold flex items-center gap-1 transition-colors disabled:opacity-50"
+                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-semibold flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             Reactivate
@@ -285,7 +285,7 @@ export default function AdminVendorsPage() {
                           <button
                             onClick={() => handleStatusChange(vendor.id, vendor.name, 'ACTIVE')}
                             disabled={processingId === vendor.id}
-                            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition-colors disabled:opacity-50"
+                            className="px-3 py-1.5 rounded-lg bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-[var(--text-on-dark)] border border-[var(--border-dark)] text-[11px] font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                           >
                             Re-evaluate (Approve)
                           </button>

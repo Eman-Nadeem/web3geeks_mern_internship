@@ -16,13 +16,13 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const product = await prisma.product.findFirst({
     where: {
       OR: [{ slug }, { id: slug }],
-      status: ProductStatus.ACTIVE,
+      status: { in: [ProductStatus.ACTIVE, ProductStatus.OUT_OF_STOCK] },
       vendor: { status: VendorStatus.ACTIVE },
     },
     include: {
       images: { orderBy: { order: 'asc' } },
       variants: {
-        where: { status: ProductStatus.ACTIVE },
+        where: { status: { in: [ProductStatus.ACTIVE, ProductStatus.OUT_OF_STOCK] } },
         orderBy: { createdAt: 'asc' },
       },
       vendor: {

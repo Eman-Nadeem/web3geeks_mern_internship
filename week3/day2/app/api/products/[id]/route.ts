@@ -16,7 +16,7 @@ export async function GET(
           { id },
           { slug: id },
         ],
-        status: ProductStatus.ACTIVE,
+        status: { in: [ProductStatus.ACTIVE, ProductStatus.OUT_OF_STOCK] },
         vendor: { status: VendorStatus.ACTIVE },
       },
       select: {
@@ -42,7 +42,7 @@ export async function GET(
           orderBy: { order: 'asc' },
         },
         variants: {
-          where: { status: ProductStatus.ACTIVE },
+          where: { status: { in: [ProductStatus.ACTIVE, ProductStatus.OUT_OF_STOCK] } },
           select: {
             id: true,
             sku: true,

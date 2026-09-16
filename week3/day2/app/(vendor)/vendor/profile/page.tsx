@@ -93,8 +93,8 @@ export default function VendorProfilePage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white tracking-tight">Store Profile & Settings</h2>
-        <p className="text-xs text-slate-400 mt-1">
+        <h2 className="text-2xl font-bold text-[var(--text-on-dark)] tracking-tight">Store Profile & Settings</h2>
+        <p className="text-xs text-[var(--text-on-dark-muted)] mt-1">
           Manage your public brand identity, store details, and customer contact endpoints.
         </p>
       </div>
@@ -103,8 +103,8 @@ export default function VendorProfilePage() {
         <div
           className={`p-4 rounded-xl text-xs flex items-center gap-2 ${
             message.type === 'success'
-              ? 'bg-emerald-950/60 border border-emerald-800 text-emerald-300'
-              : 'bg-rose-950/60 border border-rose-800 text-rose-300'
+              ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
+              : 'bg-rose-500/10 border border-rose-500/30 text-rose-400'
           }`}
         >
           {message.type === 'success' ? (
@@ -117,90 +117,90 @@ export default function VendorProfilePage() {
       )}
 
       {/* Read-Only Status & Slug Section (Phase 3 requirement) */}
-      <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="p-5 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">
+          <span className="text-[11px] font-semibold text-[var(--text-on-dark-muted)] uppercase tracking-wider block mb-1.5">
             Account Governance Status (Read-Only)
           </span>
           <div className="flex items-center gap-2">
             <StatusBadge status={vendor.status} />
-            <span className="text-xs text-slate-500">Status transitions are administered by marketplace oversight.</span>
+            <span className="text-xs text-[var(--text-on-dark-muted)]">Status transitions are administered by marketplace oversight.</span>
           </div>
         </div>
 
         <div>
-          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">
+          <span className="text-[11px] font-semibold text-[var(--text-on-dark-muted)] uppercase tracking-wider block mb-1.5">
             Store Slug Identifier
           </span>
-          <span className="text-xs font-mono text-emerald-400 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 inline-block">
+          <span className="text-xs font-mono text-emerald-400 bg-[var(--surface-card-subtle)] px-2.5 py-1 rounded-lg border border-[var(--border-dark)] inline-block">
             /vendors/{vendor.slug}
           </span>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-5 shadow-xl">
+      <form onSubmit={handleSubmit} className="p-8 rounded-3xl bg-[var(--surface-card)] border border-[var(--border-dark)] space-y-5 shadow-xl">
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-300">Store Name</label>
+          <label className="text-xs font-semibold text-[var(--text-on-dark-muted)]">Store Name</label>
           <div className="relative">
-            <Store className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Store className="w-4 h-4 text-[var(--text-on-dark-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+              className="w-full pl-9 pr-3 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] placeholder-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
             />
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-300">Store Description</label>
+          <label className="text-xs font-semibold text-[var(--text-on-dark-muted)]">Store Description</label>
           <textarea
             rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+            className="w-full p-3 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] placeholder-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
           />
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-300">Logo or Banner URL</label>
+          <label className="text-xs font-semibold text-[var(--text-on-dark-muted)]">Logo or Banner URL</label>
           <div className="relative">
-            <ImageIcon className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <ImageIcon className="w-4 h-4 text-[var(--text-on-dark-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="url"
               value={logoUrl}
               onChange={(e) => setLogoUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+              className="w-full pl-9 pr-3 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] placeholder-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Contact Email</label>
+            <label className="text-xs font-semibold text-[var(--text-on-dark-muted)]">Contact Email</label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Mail className="w-4 h-4 text-[var(--text-on-dark-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                className="w-full pl-9 pr-3 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] placeholder-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Contact Phone</label>
+            <label className="text-xs font-semibold text-[var(--text-on-dark-muted)]">Contact Phone</label>
             <div className="relative">
-              <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Phone className="w-4 h-4 text-[var(--text-on-dark-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                className="w-full pl-9 pr-3 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] placeholder-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
               />
             </div>
           </div>

@@ -246,63 +246,63 @@ export default function NewProductPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       <Link
         href="/vendor/products"
-        className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-xs font-semibold text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)] transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Products
       </Link>
 
       <div>
-        <h2 className="text-2xl font-bold text-white tracking-tight">Add New Product</h2>
-        <p className="text-xs text-slate-400 mt-1">
+        <h2 className="text-2xl font-bold text-[var(--text-on-dark)] tracking-tight">Add New Product</h2>
+        <p className="text-xs text-[var(--text-on-dark-muted)] mt-1">
           Create a product listing with SKU codes, multi-image Cloudinary uploads, and product variants.
         </p>
       </div>
 
       {error && (
-        <div className="p-3.5 rounded-xl bg-rose-950/60 border border-rose-800 text-xs text-rose-300">
+        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-500">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-6 shadow-xl">
+      <form onSubmit={handleSubmit} className="p-8 rounded-3xl bg-[var(--surface-card)] border border-[var(--border-dark)] space-y-6 shadow-sm">
         {/* Section 1: Basic Information */}
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">
+          <h3 className="text-sm font-bold text-[var(--text-on-dark)] uppercase tracking-wider border-b border-[var(--border-dark)] pb-2">
             1. Basic Information
           </h3>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Product Name *</label>
+            <label className="text-xs font-semibold text-[var(--text-on-dark)]">Product Name *</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               placeholder="e.g. Wireless Ergonomic Mechanical Keyboard"
-              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+              className="w-full px-3.5 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] placeholder:text-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
             />
-            {fieldErrors.name && <p className="text-[11px] text-rose-400">{fieldErrors.name[0]}</p>}
+            {fieldErrors.name && <p className="text-[11px] text-rose-500">{fieldErrors.name[0]}</p>}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Product SKU (Unique to your store) *</label>
+              <label className="text-xs font-semibold text-[var(--text-on-dark)]">Product SKU (Unique to your store) *</label>
               <input
                 type="text"
                 required
                 value={sku}
                 onChange={(e) => setSku(e.target.value.toUpperCase())}
                 placeholder="e.g. NT-KB-001"
-                className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                className="w-full px-3.5 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] font-mono placeholder:text-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
               />
-              {fieldErrors.sku && <p className="text-[11px] text-rose-400">{fieldErrors.sku[0]}</p>}
+              {fieldErrors.sku && <p className="text-[11px] text-rose-500">{fieldErrors.sku[0]}</p>}
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Product Slug (Public URL) *</label>
+              <label className="text-xs font-semibold text-[var(--text-on-dark)]">Product Slug (Public URL) *</label>
               <div className="relative">
-                <Link2 className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Link2 className="w-4 h-4 text-[var(--text-on-dark-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   required
@@ -310,36 +310,36 @@ export default function NewProductPage() {
                   value={slug}
                   onChange={(e) => setSlug(e.target.value.toLowerCase())}
                   placeholder="wireless-ergonomic-mechanical-keyboard"
-                  className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-emerald-400 font-mono placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                  className="w-full pl-9 pr-3 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-emerald-600 dark:text-emerald-400 font-mono placeholder:text-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
                 />
               </div>
-              {fieldErrors.slug && <p className="text-[11px] text-rose-400">{fieldErrors.slug[0]}</p>}
+              {fieldErrors.slug && <p className="text-[11px] text-rose-500">{fieldErrors.slug[0]}</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Category *</label>
+              <label className="text-xs font-semibold text-[var(--text-on-dark)]">Category *</label>
               <div className="relative">
-                <Tag className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Tag className="w-4 h-4 text-[var(--text-on-dark-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   required
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   placeholder="e.g. Electronics, Audio, Accessories"
-                  className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                  className="w-full pl-9 pr-3 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] placeholder:text-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
                 />
               </div>
-              {fieldErrors.category && <p className="text-[11px] text-rose-400">{fieldErrors.category[0]}</p>}
+              {fieldErrors.category && <p className="text-[11px] text-rose-500">{fieldErrors.category[0]}</p>}
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Publication Status</label>
+              <label className="text-xs font-semibold text-[var(--text-on-dark)]">Publication Status</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as 'ACTIVE' | 'DRAFT')}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] focus:outline-none focus:border-emerald-500"
               >
                 <option value="ACTIVE">ACTIVE (Published to marketplace)</option>
                 <option value="DRAFT">DRAFT (Saved as hidden draft)</option>
@@ -348,30 +348,30 @@ export default function NewProductPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Description *</label>
+            <label className="text-xs font-semibold text-[var(--text-on-dark)]">Description *</label>
             <textarea
               rows={4}
               required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Detailed specifications, features, warranty, and craftsmanship details..."
-              className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+              className="w-full p-3 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] placeholder:text-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
             />
-            {fieldErrors.description && <p className="text-[11px] text-rose-400">{fieldErrors.description[0]}</p>}
+            {fieldErrors.description && <p className="text-[11px] text-rose-500">{fieldErrors.description[0]}</p>}
           </div>
         </div>
 
         {/* Section 2: Pricing & Stock Inventory */}
         <div className="space-y-4 pt-2">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">
+          <h3 className="text-sm font-bold text-[var(--text-on-dark)] uppercase tracking-wider border-b border-[var(--border-dark)] pb-2">
             2. Pricing & Stock Inventory
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Selling Price ($ USD) *</label>
+              <label className="text-xs font-semibold text-[var(--text-on-dark)]">Selling Price ($ USD) *</label>
               <div className="relative">
-                <DollarSign className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <DollarSign className="w-4 h-4 text-[var(--text-on-dark-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="number"
                   step="0.01"
@@ -380,16 +380,16 @@ export default function NewProductPage() {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="129.99"
-                  className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                  className="w-full pl-9 pr-3 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] placeholder:text-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
                 />
               </div>
-              {fieldErrors.price && <p className="text-[11px] text-rose-400">{fieldErrors.price[0]}</p>}
+              {fieldErrors.price && <p className="text-[11px] text-rose-500">{fieldErrors.price[0]}</p>}
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Compare-at Price ($ USD) - Optional</label>
+              <label className="text-xs font-semibold text-[var(--text-on-dark)]">Compare-at Price ($ USD) - Optional</label>
               <div className="relative">
-                <DollarSign className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <DollarSign className="w-4 h-4 text-[var(--text-on-dark-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="number"
                   step="0.01"
@@ -397,18 +397,18 @@ export default function NewProductPage() {
                   value={compareAtPrice}
                   onChange={(e) => setCompareAtPrice(e.target.value)}
                   placeholder="159.99"
-                  className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                  className="w-full pl-9 pr-3 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] placeholder:text-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
                 />
               </div>
-              {fieldErrors.compareAtPrice && <p className="text-[11px] text-rose-400">{fieldErrors.compareAtPrice[0]}</p>}
+              {fieldErrors.compareAtPrice && <p className="text-[11px] text-rose-500">{fieldErrors.compareAtPrice[0]}</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Initial Stock Units *</label>
+              <label className="text-xs font-semibold text-[var(--text-on-dark)]">Initial Stock Units *</label>
               <div className="relative">
-                <Box className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Box className="w-4 h-4 text-[var(--text-on-dark-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="number"
                   min="0"
@@ -416,14 +416,14 @@ export default function NewProductPage() {
                   value={stockQuantity}
                   onChange={(e) => setStockQuantity(e.target.value)}
                   placeholder="10"
-                  className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                  className="w-full pl-9 pr-3 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] placeholder:text-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
                 />
               </div>
-              {fieldErrors.stockQuantity && <p className="text-[11px] text-rose-400">{fieldErrors.stockQuantity[0]}</p>}
+              {fieldErrors.stockQuantity && <p className="text-[11px] text-rose-500">{fieldErrors.stockQuantity[0]}</p>}
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Low-Stock Alert Threshold *</label>
+              <label className="text-xs font-semibold text-[var(--text-on-dark)]">Low-Stock Alert Threshold *</label>
               <input
                 type="number"
                 min="0"
@@ -431,20 +431,20 @@ export default function NewProductPage() {
                 value={lowStockThreshold}
                 onChange={(e) => setLowStockThreshold(e.target.value)}
                 placeholder="5"
-                className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                className="w-full px-3.5 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] placeholder:text-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
               />
-              {fieldErrors.lowStockThreshold && <p className="text-[11px] text-rose-400">{fieldErrors.lowStockThreshold[0]}</p>}
+              {fieldErrors.lowStockThreshold && <p className="text-[11px] text-rose-500">{fieldErrors.lowStockThreshold[0]}</p>}
             </div>
           </div>
         </div>
 
         {/* Section 3: Multi-Image Cloudinary Upload */}
         <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+          <div className="flex items-center justify-between border-b border-[var(--border-dark)] pb-2">
+            <h3 className="text-sm font-bold text-[var(--text-on-dark)] uppercase tracking-wider">
               3. Product Images (Cloudinary & URLs)
             </h3>
-            <span className="text-[11px] text-slate-400">Star = Primary Image</span>
+            <span className="text-[11px] text-[var(--text-on-dark-muted)]">Star = Primary Image</span>
           </div>
 
           <div className="space-y-3">
@@ -456,19 +456,19 @@ export default function NewProductPage() {
                   value={newImageUrl}
                   onChange={(e) => setNewImageUrl(e.target.value)}
                   placeholder="Paste direct image URL (https://...)"
-                  className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3.5 py-2 bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] rounded-xl text-xs text-[var(--text-on-dark)] placeholder:text-[var(--text-on-dark-muted)] focus:outline-none focus:border-emerald-500"
                 />
                 <button
                   type="button"
                   onClick={handleAddImageUrl}
-                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold shrink-0"
+                  className="px-3 py-2 bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-[var(--text-on-dark)] border border-[var(--border-dark)] rounded-xl text-xs font-semibold shrink-0 cursor-pointer"
                 >
                   Add URL
                 </button>
               </div>
 
               <div className="sm:col-span-4">
-                <label className="w-full px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-md transition-colors">
+                <label className="w-full px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-colors">
                   <Upload className="w-4 h-4" />
                   <span>{uploadingImage ? 'Uploading...' : 'Upload Cloudinary'}</span>
                   <input
@@ -488,26 +488,26 @@ export default function NewProductPage() {
                 {images.map((img, idx) => (
                   <div
                     key={idx}
-                    className={`relative rounded-xl border p-2 bg-slate-950 flex flex-col items-center gap-2 ${
-                      img.isPrimary ? 'border-emerald-500 ring-2 ring-emerald-500/30' : 'border-slate-800'
+                    className={`relative rounded-xl border p-2 bg-[var(--surface-card-subtle)] flex flex-col items-center gap-2 ${
+                      img.isPrimary ? 'border-emerald-500 ring-2 ring-emerald-500/30' : 'border-[var(--border-dark)]'
                     }`}
                   >
-                    <img src={img.url} alt="" className="w-full h-24 object-contain rounded-lg bg-slate-900" />
-                    <div className="flex items-center justify-between w-full text-xs pt-1 border-t border-slate-900">
+                    <img src={img.url} alt="" className="w-full h-24 object-contain rounded-lg bg-[var(--surface-card)]" />
+                    <div className="flex items-center justify-between w-full text-xs pt-1 border-t border-[var(--border-dark)]">
                       <button
                         type="button"
                         onClick={() => setPrimaryImage(idx)}
-                        className={`flex items-center gap-1 text-[11px] font-semibold ${
-                          img.isPrimary ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'
+                        className={`flex items-center gap-1 text-[11px] font-semibold cursor-pointer ${
+                          img.isPrimary ? 'text-emerald-500 font-bold' : 'text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)]'
                         }`}
                       >
-                        <Star className={`w-3.5 h-3.5 ${img.isPrimary ? 'fill-emerald-400' : ''}`} />
+                        <Star className={`w-3.5 h-3.5 ${img.isPrimary ? 'fill-emerald-500 text-emerald-500' : ''}`} />
                         {img.isPrimary ? 'Primary' : 'Set Primary'}
                       </button>
                       <button
                         type="button"
                         onClick={() => removeImage(idx)}
-                        className="text-slate-500 hover:text-rose-400 p-1"
+                        className="text-[var(--text-on-dark-muted)] hover:text-rose-500 p-1 cursor-pointer"
                         title="Remove Image"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -522,14 +522,14 @@ export default function NewProductPage() {
 
         {/* Section 4: Product Variants */}
         <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div className="flex items-center justify-between border-b border-[var(--border-dark)] pb-2">
             <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-indigo-400" />
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+              <Layers className="w-4 h-4 text-indigo-500" />
+              <h3 className="text-sm font-bold text-[var(--text-on-dark)] uppercase tracking-wider">
                 4. Product Variants (Optional)
               </h3>
             </div>
-            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-[var(--text-on-dark)] cursor-pointer">
               <input
                 type="checkbox"
                 checked={hasVariants}
@@ -542,19 +542,19 @@ export default function NewProductPage() {
 
           {hasVariants && (
             <div className="space-y-3">
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-[var(--text-on-dark-muted)]">
                 When variants are configured, stock and pricing can be set per variant. Parent stock is computed automatically.
               </p>
 
               {variants.map((v, idx) => (
-                <div key={idx} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+                <div key={idx} className="p-4 rounded-xl bg-[var(--surface-card-subtle)] border border-[var(--border-dark)] space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white">Variant #{idx + 1}</span>
+                    <span className="text-xs font-semibold text-[var(--text-on-dark)]">Variant #{idx + 1}</span>
                     {variants.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeVariantRow(idx)}
-                        className="text-slate-500 hover:text-rose-400 text-xs flex items-center gap-1"
+                        className="text-[var(--text-on-dark-muted)] hover:text-rose-500 text-xs flex items-center gap-1 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" /> Remove
                       </button>
@@ -563,45 +563,45 @@ export default function NewProductPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                     <div>
-                      <label className="text-[11px] text-slate-400 block mb-1">Option Name</label>
+                      <label className="text-[11px] text-[var(--text-on-dark-muted)] block mb-1">Option Name</label>
                       <input
                         type="text"
                         placeholder="e.g. Color, Size"
                         value={v.optionKey}
                         onChange={(e) => updateVariant(idx, 'optionKey', e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white"
+                        className="w-full px-2.5 py-1.5 bg-[var(--surface-card)] border border-[var(--border-dark)] rounded-lg text-xs text-[var(--text-on-dark)]"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] text-slate-400 block mb-1">Option Value</label>
+                      <label className="text-[11px] text-[var(--text-on-dark-muted)] block mb-1">Option Value</label>
                       <input
                         type="text"
                         placeholder="e.g. Matte Black, Large"
                         value={v.optionValue}
                         onChange={(e) => updateVariant(idx, 'optionValue', e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white"
+                        className="w-full px-2.5 py-1.5 bg-[var(--surface-card)] border border-[var(--border-dark)] rounded-lg text-xs text-[var(--text-on-dark)]"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] text-slate-400 block mb-1">Variant SKU *</label>
+                      <label className="text-[11px] text-[var(--text-on-dark-muted)] block mb-1">Variant SKU *</label>
                       <input
                         type="text"
                         required={hasVariants}
                         placeholder="e.g. KB-01-BLK"
                         value={v.sku}
                         onChange={(e) => updateVariant(idx, 'sku', e.target.value.toUpperCase())}
-                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white font-mono"
+                        className="w-full px-2.5 py-1.5 bg-[var(--surface-card)] border border-[var(--border-dark)] rounded-lg text-xs text-[var(--text-on-dark)] font-mono"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] text-slate-400 block mb-1">Stock Units *</label>
+                      <label className="text-[11px] text-[var(--text-on-dark-muted)] block mb-1">Stock Units *</label>
                       <input
                         type="number"
                         min="0"
                         required={hasVariants}
                         value={v.stockQuantity}
                         onChange={(e) => updateVariant(idx, 'stockQuantity', e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white"
+                        className="w-full px-2.5 py-1.5 bg-[var(--surface-card)] border border-[var(--border-dark)] rounded-lg text-xs text-[var(--text-on-dark)]"
                       />
                     </div>
                   </div>
@@ -611,7 +611,7 @@ export default function NewProductPage() {
               <button
                 type="button"
                 onClick={addVariantRow}
-                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5"
+                className="px-3.5 py-2 bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-[var(--text-on-dark)] border border-[var(--border-dark)] rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add Another Variant
@@ -624,7 +624,7 @@ export default function NewProductPage() {
         <button
           type="submit"
           disabled={loading || uploadingImage}
-          className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors shadow-md shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
+          className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 mt-4 cursor-pointer"
         >
           {loading ? 'Creating product...' : 'Create & Save Product'}
           <ArrowRight className="w-4 h-4" />

@@ -70,89 +70,89 @@ export default async function VendorDashboardPage() {
     <div className="space-y-8">
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1.5">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-4 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] space-y-1.5 shadow-sm">
+          <div className="flex items-center justify-between text-[var(--text-on-dark-muted)]">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Total Catalog</span>
-            <Package className="w-4 h-4 text-indigo-400" />
+            <Package className="w-4 h-4 text-indigo-500" />
           </div>
-          <div className="text-2xl font-extrabold text-white">{totalProducts}</div>
-          <span className="text-[11px] text-slate-500 block">Total products</span>
+          <div className="text-2xl font-extrabold text-[var(--text-on-dark)]">{totalProducts}</div>
+          <span className="text-[11px] text-[var(--text-on-dark-muted)] block">Total products</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1.5">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-4 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] space-y-1.5 shadow-sm">
+          <div className="flex items-center justify-between text-[var(--text-on-dark-muted)]">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Active Published</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="text-2xl font-extrabold text-emerald-400">{activeProducts}</div>
-          <span className="text-[11px] text-slate-500 block">Live on storefront</span>
+          <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{activeProducts}</div>
+          <span className="text-[11px] text-[var(--text-on-dark-muted)] block">Live on storefront</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1.5">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-4 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] space-y-1.5 shadow-sm">
+          <div className="flex items-center justify-between text-[var(--text-on-dark-muted)]">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Draft Items</span>
-            <Archive className="w-4 h-4 text-slate-400" />
+            <Archive className="w-4 h-4 text-[var(--text-on-dark-muted)]" />
           </div>
-          <div className="text-2xl font-extrabold text-slate-300">{draftProducts}</div>
-          <span className="text-[11px] text-slate-500 block">Unpublished drafts</span>
+          <div className="text-2xl font-extrabold text-[var(--text-on-dark)]">{draftProducts}</div>
+          <span className="text-[11px] text-[var(--text-on-dark-muted)] block">Unpublished drafts</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1.5">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-4 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] space-y-1.5 shadow-sm">
+          <div className="flex items-center justify-between text-[var(--text-on-dark-muted)]">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Low Stock</span>
-            <TrendingDown className="w-4 h-4 text-amber-400" />
+            <TrendingDown className="w-4 h-4 text-amber-500" />
           </div>
-          <div className="text-2xl font-extrabold text-amber-400">{lowStockCount}</div>
-          <span className="text-[11px] text-slate-500 block">At or below threshold</span>
+          <div className="text-2xl font-extrabold text-amber-500">{lowStockCount}</div>
+          <span className="text-[11px] text-[var(--text-on-dark-muted)] block">At or below threshold</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1.5">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-4 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] space-y-1.5 shadow-sm">
+          <div className="flex items-center justify-between text-[var(--text-on-dark-muted)]">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Out of Stock</span>
-            <AlertTriangle className="w-4 h-4 text-rose-400" />
+            <AlertTriangle className="w-4 h-4 text-rose-500" />
           </div>
-          <div className="text-2xl font-extrabold text-rose-400">{outOfStockCount}</div>
-          <span className="text-[11px] text-slate-500 block">Requires restock</span>
+          <div className="text-2xl font-extrabold text-rose-500">{outOfStockCount}</div>
+          <span className="text-[11px] text-[var(--text-on-dark-muted)] block">Requires restock</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1.5">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-4 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] space-y-1.5 shadow-sm">
+          <div className="flex items-center justify-between text-[var(--text-on-dark-muted)]">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Total Units</span>
-            <Boxes className="w-4 h-4 text-cyan-400" />
+            <Boxes className="w-4 h-4 text-cyan-500" />
           </div>
-          <div className="text-2xl font-extrabold text-cyan-400">{totalInventoryUnits}</div>
-          <span className="text-[11px] text-slate-500 block">Sum of active inventory</span>
+          <div className="text-2xl font-extrabold text-cyan-600 dark:text-cyan-400">{totalInventoryUnits}</div>
+          <span className="text-[11px] text-[var(--text-on-dark-muted)] block">Sum of active inventory</span>
         </div>
       </div>
 
       {/* Quick Action Bar */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/20 to-slate-900 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="p-6 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <h3 className="text-base font-bold text-white">Vendor Catalog & Inventory Center</h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <h3 className="text-base font-bold text-[var(--text-on-dark)]">Vendor Catalog & Inventory Center</h3>
+          <p className="text-xs text-[var(--text-on-dark-muted)] mt-0.5">
             Add new products, adjust stock with audit trails, or manage product variants.
           </p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
           <Link
             href="/vendor/products/new"
-            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 w-full sm:w-auto"
+            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm w-full sm:w-auto"
           >
             <PlusCircle className="w-4 h-4" />
             Add Product
           </Link>
           <Link
             href="/vendor/inventory"
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors w-full sm:w-auto border border-slate-700"
+            className="px-4 py-2 rounded-xl bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-[var(--text-on-dark)] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors w-full sm:w-auto border border-[var(--border-dark)]"
           >
-            <Boxes className="w-4 h-4 text-cyan-400" />
+            <Boxes className="w-4 h-4 text-cyan-500" />
             Inventory Manager
           </Link>
           {vendor.status === 'ACTIVE' && (
             <Link
               href={`/vendors/${vendor.slug}`}
               target="_blank"
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors w-full sm:w-auto"
+              className="px-4 py-2 rounded-xl bg-[var(--surface-card-subtle)] hover:bg-[var(--border-dark)] text-[var(--text-on-dark)] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors w-full sm:w-auto border border-[var(--border-dark)]"
             >
               <ExternalLink className="w-4 h-4" />
               Storefront
@@ -162,19 +162,19 @@ export default async function VendorDashboardPage() {
       </div>
 
       {/* Recent Catalog Table */}
-      <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+      <div className="p-6 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-dark)] space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-white tracking-tight">Recent Products</h3>
+          <h3 className="text-base font-bold text-[var(--text-on-dark)] tracking-tight">Recent Products</h3>
           <div className="flex items-center gap-4">
             <Link
               href="/vendor/inventory"
-              className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+              className="text-xs font-semibold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
             >
               Manage Inventory
             </Link>
             <Link
               href="/vendor/products"
-              className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+              className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
             >
               View all products
               <ArrowRight className="w-3.5 h-3.5" />
@@ -183,12 +183,12 @@ export default async function VendorDashboardPage() {
         </div>
 
         {recentProducts.length === 0 ? (
-          <div className="py-12 text-center text-slate-500 space-y-2">
-            <Box className="w-8 h-8 mx-auto text-slate-600" />
+          <div className="py-12 text-center text-[var(--text-on-dark-muted)] space-y-2">
+            <Box className="w-8 h-8 mx-auto opacity-40" />
             <p className="text-xs">No products in your store yet.</p>
             <Link
               href="/vendor/products/new"
-              className="inline-block mt-2 text-xs text-emerald-400 hover:underline font-semibold"
+              className="inline-block mt-2 text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-semibold"
             >
               Add your first product &rarr;
             </Link>
@@ -196,7 +196,7 @@ export default async function VendorDashboardPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-800">
+              <thead className="text-[11px] text-[var(--text-on-dark-muted)] uppercase tracking-wider border-b border-[var(--border-dark)]">
                 <tr>
                   <th className="pb-3 font-semibold">Product</th>
                   <th className="pb-3 font-semibold">SKU</th>
@@ -207,43 +207,43 @@ export default async function VendorDashboardPage() {
                   <th className="pb-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-[var(--border-dark)]">
                 {recentProducts.map((product) => {
                   const primaryImg = product.images.find((img) => img.isPrimary) || product.images[0];
                   const isLow = product.stockQuantity > 0 && product.stockQuantity <= product.lowStockThreshold;
                   const isOut = product.stockQuantity === 0;
 
                   return (
-                    <tr key={product.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="py-3 font-medium text-white flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-slate-800 overflow-hidden flex items-center justify-center shrink-0 border border-slate-700">
+                    <tr key={product.id} className="hover:bg-[var(--surface-card-subtle)] transition-colors">
+                      <td className="py-3 font-medium text-[var(--text-on-dark)] flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-[var(--surface-card-subtle)] overflow-hidden flex items-center justify-center shrink-0 border border-[var(--border-dark)]">
                           {primaryImg ? (
                             <img src={primaryImg.url} alt={product.name} className="w-full h-full object-cover" />
                           ) : (
-                            <Box className="w-4 h-4 text-slate-500" />
+                            <Box className="w-4 h-4 text-[var(--text-on-dark-muted)]" />
                           )}
                         </div>
                         <div>
                           <span className="line-clamp-1">{product.name}</span>
                           {product.variants.length > 0 && (
-                            <span className="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
-                              <Layers className="w-3 h-3 text-indigo-400" />
+                            <span className="text-[10px] text-[var(--text-on-dark-muted)] flex items-center gap-1 font-mono">
+                              <Layers className="w-3 h-3 text-indigo-500" />
                               {product.variants.length} variants
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="py-3 font-mono text-slate-400">{product.sku}</td>
-                      <td className="py-3 text-slate-400">{product.category}</td>
-                      <td className="py-3 text-emerald-400 font-semibold">${product.price.toFixed(2)}</td>
+                      <td className="py-3 font-mono text-[var(--text-on-dark-muted)]">{product.sku}</td>
+                      <td className="py-3 text-[var(--text-on-dark-muted)]">{product.category}</td>
+                      <td className="py-3 text-emerald-600 dark:text-emerald-400 font-semibold">${product.price.toFixed(2)}</td>
                       <td className="py-3">
                         <span
                           className={`font-medium ${
                             isOut
-                              ? 'text-rose-400 font-bold'
+                              ? 'text-rose-500 font-bold'
                               : isLow
-                              ? 'text-amber-400 font-semibold'
-                              : 'text-slate-300'
+                              ? 'text-amber-500 font-semibold'
+                              : 'text-[var(--text-on-dark)]'
                           }`}
                         >
                           {product.stockQuantity} units
@@ -256,7 +256,7 @@ export default async function VendorDashboardPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           <Link
                             href={`/vendor/products/${product.id}/edit`}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 inline-block transition-colors"
+                            className="p-1.5 rounded-lg text-[var(--text-on-dark-muted)] hover:text-[var(--text-on-dark)] hover:bg-[var(--surface-card-subtle)] inline-block transition-colors"
                             title="Edit Product"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
