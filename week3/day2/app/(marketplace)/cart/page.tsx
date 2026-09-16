@@ -38,7 +38,7 @@ export default function CartPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center bg-[#1B2436] text-[#A9B2C3]">
+      <div className="min-h-[70vh] flex items-center justify-center bg-[var(--bg-canvas)] text-[var(--text-on-dark-muted)]">
         <div className="flex items-center gap-2 text-sm">
           <div className="w-5 h-5 border-2 border-[#1E7A56] border-t-transparent rounded-full animate-spin" />
           <span>Loading your cart...</span>

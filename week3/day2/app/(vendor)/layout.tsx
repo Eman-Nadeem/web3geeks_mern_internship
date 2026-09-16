@@ -33,7 +33,7 @@ export default async function VendorLayout({
   // If user has not created a vendor yet, allow rendering children (e.g. Onboarding page)
   if (!vendor) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#1B2436] text-white">
+      <div className="min-h-screen flex flex-col bg-[var(--bg-canvas)] text-[var(--text-on-dark)] transition-colors duration-200">
         <Navbar />
         <div className="max-w-4xl mx-auto px-4 py-8 w-full flex-1">
           {children}
@@ -43,7 +43,7 @@ export default async function VendorLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#1B2436] text-white">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-canvas)] text-[var(--text-on-dark)] transition-colors duration-200">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
