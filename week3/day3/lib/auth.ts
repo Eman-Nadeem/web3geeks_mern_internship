@@ -5,8 +5,19 @@ import prisma from './prisma';
 import { UserRole } from '@prisma/client';
 
 export const SESSION_COOKIE_NAME = 'marketplace_session';
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-marketplace-jwt-key-2026-production-ready';
-const encodedSecret = new TextEncoder().encode(JWT_SECRET);
+
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('FATAL SECURITY ERROR: JWT_SECRET environment variable is required in production.');
+    }
+    return new TextEncoder().encode('dev-only-insecure-secret-never-use-in-prod');
+  }
+  return new TextEncoder().encode(secret);
+}
+
+const encodedSecret = getJwtSecret();
 
 export interface SessionPayload {
   userId: string;

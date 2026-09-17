@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { errorResponse, successResponse } from '@/lib/guards';
-import { ProductStatus, VendorStatus } from '@prisma/client';
+import { ProductStatus, VendorStatus, Prisma } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const availability = searchParams.get('availability');
     const sort = searchParams.get('sort') || 'newest';
 
-    const where: any = {
+    const where: Prisma.ProductWhereInput = {
       status: ProductStatus.ACTIVE,
       vendor: { status: VendorStatus.ACTIVE },
     };
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    let orderBy: any = { createdAt: 'desc' };
+    let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: 'desc' };
     if (sort === 'oldest') {
       orderBy = { createdAt: 'asc' };
     } else if (sort === 'price_asc') {

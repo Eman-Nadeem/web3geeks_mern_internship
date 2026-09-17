@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireVendor, errorResponse, successResponse } from '@/lib/guards';
-import { ProductStatus } from '@prisma/client';
+import { ProductStatus, Prisma } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search')?.trim();
     const status = searchParams.get('status');
 
-    const where: any = {
+    const where: Prisma.ProductWhereInput = {
       vendorId: vendor.id,
     };
 

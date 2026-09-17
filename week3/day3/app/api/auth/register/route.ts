@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       return errorResponse('Validation failed', 400, result.error.flatten().fieldErrors);
     }
 
-    const { name, email, password, role } = result.data;
+    const { name, email, password } = result.data;
 
     const existing = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
         name,
         email: email.toLowerCase(),
         passwordHash,
-        role,
+        role: 'CUSTOMER',
       },
       select: {
         id: true,

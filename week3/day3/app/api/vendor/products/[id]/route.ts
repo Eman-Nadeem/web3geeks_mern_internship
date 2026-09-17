@@ -31,7 +31,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const { vendor } = await requireVendor(['ACTIVE']);
+    const { vendor } = await requireVendor(['ACTIVE', 'PENDING']);
 
     // Ensure product belongs to authenticated vendor (403 otherwise)
     const existing = await assertProductOwnership(id, vendor.id);
@@ -58,6 +58,17 @@ export async function PATCH(
       variants,
       imageUrl,
     } = result.data;
+
+    // Check duplicate SKUs in provided variants array
+    if (variants && variants.length > 0) {
+      const skus = variants.map((v) => v.sku.trim().toLowerCase());
+      const duplicateSku = skus.find((s, index) => skus.indexOf(s) !== index);
+      if (duplicateSku) {
+        return errorResponse('Validation failed', 409, {
+          variants: [`Duplicate variant SKU "${duplicateSku}" provided for this product.`],
+        });
+      }
+    }
 
     // Check slug uniqueness if changed
     if (slug && slug !== existing.slug) {
@@ -138,7 +149,7 @@ export async function PATCH(
               price: v.price ?? null,
               stockQuantity: v.stockQuantity,
               imageUrl: v.imageUrl ?? null,
-              status: v.status || ProductStatus.ACTIVE,
+              status: vendor.status === 'PENDING' ? ProductStatus.DRAFT : (v.status || ProductStatus.ACTIVE),
             })),
           });
         }
@@ -151,7 +162,9 @@ export async function PATCH(
       }
 
       let effectiveStatus = status;
-      if (effectiveStock === 0 && (status === ProductStatus.ACTIVE || (!status && existing.status === ProductStatus.ACTIVE))) {
+      if (vendor.status === 'PENDING') {
+        effectiveStatus = ProductStatus.DRAFT;
+      } else if (effectiveStock === 0 && (status === ProductStatus.ACTIVE || (!status && existing.status === ProductStatus.ACTIVE))) {
         effectiveStatus = ProductStatus.OUT_OF_STOCK;
       }
 
@@ -187,9 +200,27 @@ export async function PATCH(
 
     return successResponse(updated);
   } catch (err: unknown) {
-    if (err && typeof err === 'object' && 'statusCode' in err && 'message' in err) {
-      const appErr = err as { message: string; statusCode: number; details?: unknown };
-      return errorResponse(appErr.message, appErr.statusCode, appErr.details);
+    if (err && typeof err === 'object') {
+      if ('code' in err && (err as { code: string }).code === 'P2002') {
+        const target = (err as { meta?: { target?: string[] | string } }).meta?.target;
+        const targetStr = Array.isArray(target) ? target.join(', ') : String(target || '');
+        if (targetStr.includes('sku') || targetStr.includes('ProductVariant')) {
+          return errorResponse('Validation failed', 409, {
+            sku: ['A variant with this SKU already exists for this product.'],
+          });
+        }
+        if (targetStr.includes('slug')) {
+          return errorResponse('Validation failed', 409, {
+            slug: ['A product with this slug already exists.'],
+          });
+        }
+        return errorResponse('A unique constraint was violated.', 409);
+      }
+
+      if ('statusCode' in err && 'message' in err) {
+        const appErr = err as { message: string; statusCode: number; details?: unknown };
+        return errorResponse(appErr.message, appErr.statusCode, appErr.details);
+      }
     }
     console.error('Failed to update product:', err);
     return errorResponse('Failed to update product', 500);
@@ -202,7 +233,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const { vendor } = await requireVendor(['ACTIVE']);
+    const { vendor } = await requireVendor(['ACTIVE', 'PENDING']);
     const { searchParams } = new URL(req.url);
     const permanent = searchParams.get('permanent') === 'true';
 

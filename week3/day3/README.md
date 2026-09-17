@@ -8,6 +8,11 @@ A production-grade, multi-vendor ecommerce marketplace engine built with **Next.
 
 ### 1. Data Models & Relationships
 
+- **`Product`**:
+  - `id`, `name`, `slug` (`@unique` globally), `sku` (`@@unique([vendorId, sku])`), `price`, `compareAtPrice`, `stockQuantity`, `lowStockThreshold`, `category`, `status`, `vendorId` (FK), `createdAt`, `updatedAt`.
+  - **Slug Uniqueness Scope Design Decision**: Product slugs are globally unique (`@unique` on `Product.slug`) because the marketplace routing scheme is `/products/:slug` (with direct slug routing rather than `/vendors/:vendorSlug/products/:slug`). This ensures unambiguous single-product URL resolution across the entire marketplace.
+- **`ProductVariant`**:
+  - `id`, `productId` (FK), `sku` (`@@unique([productId, sku])`), `options` (JSON), `price`, `stockQuantity`, `imageUrl`, `status`, `createdAt`, `updatedAt`.
 - **`Cart`**:
   - `id`, `customerId` (`@unique` — one active cart per customer), `createdAt`, `updatedAt`.
 - **`CartItem`**:
@@ -163,3 +168,21 @@ Visit:
 - **Multi-Vendor Checkout**: `http://localhost:3000/checkout`
 - **Customer Order History**: `http://localhost:3000/orders`
 - **Vendor Order Management**: `http://localhost:3000/vendor/orders`
+
+---
+
+## 🛠 Known Issues & Audit Resolutions (Days 1–3)
+
+| Priority | Issue / Finding | Root Cause | Resolution & Status |
+|---|---|---|---|
+| **P0** | **Client-Controlled Role on Registration** | `POST /api/auth/register` read `role` from request body without server-side override. | **FIXED**: Removed `role` from `registerSchema` entirely; registration hardcodes `role: 'CUSTOMER'`. Dedicated admin role changes only via protected admin endpoints. |
+| **P1** | **Checkout Stock Deduction Race Condition** | Read-then-write stock decrement allowed concurrent checkouts to oversell stock. | **FIXED**: Implemented conditional atomic updates (`updateMany` with `stockQuantity: { gte: quantity }` and `{ decrement: quantity }`) on products and variants. Aborts and rolls back transaction cleanly if stock is exhausted. |
+| **P1** | **Duplicate Variant SKU Returns 500** | Creating variants with duplicate SKU triggered raw Prisma `P2002` error surfacing as 500. | **FIXED**: Added pre-insert variant SKU uniqueness check and Prisma `P2002` error mapping returning `409 Conflict` with field-level error messages. |
+| **P2** | **Vendor PENDING-Status Messaging Mismatch** | Pending dashboard copy mentioned product drafting, but API required ACTIVE status. | **FIXED**: Relaxed `POST /api/vendor/products` and `PATCH /api/vendor/products/:id` to allow pending vendors to draft products, strictly forcing `status: 'DRAFT'` until approved. |
+| **P2** | **Product Slug Uniqueness Scope** | Day 1 had composite `[vendorId, slug]`, Day 2 used global `slug` `@unique`. | **DOCUMENTED**: Confirmed and documented that global `@unique` on `Product.slug` is intentional to support clean `/products/:slug` URL routing without vendor prefixes. |
+| **P2** | **Hardcoded JWT Fallback Secret & Missing .env.example** | Hardcoded secret fallback used in all environments; incomplete env docs. | **FIXED**: In `production`, missing `JWT_SECRET` throws a fatal startup error. Documented `.env.example` created with all required vars; `.env` gitignored. |
+| **P2** | **Dead Supabase SDK Boilerplate** | Unused `@supabase/ssr` and `@supabase/supabase-js` boilerplate remained in codebase. | **FIXED**: Deleted `utils/supabase/` directory and removed Supabase packages from `package.json`. |
+| **P2** | **`any`-Typed Query Clauses Regression** | `where` / `orderBy` clauses in product/inventory API routes were typed `any`. | **FIXED**: Typed explicitly with `Prisma.ProductWhereInput` and `Prisma.ProductOrderByWithRelationInput`. |
+| **P2** | **Order-Cancellation Restock on Hard-Deleted Products** | Restocking on order cancellation threw FK error if a product line was permanently deleted. | **FIXED**: Verified product existence before restoring inventory / writing adjustments; skipped deleted items gracefully and recorded them in `orphanedItems`. |
+| **Perf** | **Cart Latency & Slow Badge Update** | Serial network requests (`POST /items` followed by `GET /cart`) delayed UI feedback. | **FIXED**: Implemented **Optimistic UI Updates** across `addToCart`, `updateQuantity`, `removeFromCart`, and `clearCart`, delivering 0ms immediate UI & badge updates. |
+

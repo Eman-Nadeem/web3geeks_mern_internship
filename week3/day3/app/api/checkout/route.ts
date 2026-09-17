@@ -207,37 +207,71 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // 7. Atomic stock deduction & inventory audit logging
+      // 7. Conditional atomic stock deduction & inventory audit logging
       for (const it of processedItems) {
         if (it.variantId && it.variantStock !== undefined) {
-          const newVarStock = it.variantStock - it.quantity;
-          if (newVarStock < 0) {
-            throw new AppError(`Stock race condition for variant SKU: ${it.sku}. Transaction rolled back.`, 400);
+          // Conditional atomic decrement on ProductVariant
+          const updatedVariant = await tx.productVariant.updateMany({
+            where: {
+              id: it.variantId,
+              stockQuantity: { gte: it.quantity },
+            },
+            data: {
+              stockQuantity: { decrement: it.quantity },
+            },
+          });
+
+          if (updatedVariant.count === 0) {
+            throw new AppError(`Insufficient stock for variant SKU "${it.sku}". Transaction aborted.`, 400);
           }
 
-          await tx.productVariant.update({
+          // Conditional atomic decrement on Product
+          const updatedProduct = await tx.product.updateMany({
+            where: {
+              id: it.productId,
+              stockQuantity: { gte: it.quantity },
+            },
+            data: {
+              stockQuantity: { decrement: it.quantity },
+            },
+          });
+
+          if (updatedProduct.count === 0) {
+            throw new AppError(`Insufficient stock for product "${it.productName}". Transaction aborted.`, 400);
+          }
+
+          // Check if variant / product transitioned to out of stock
+          const freshVariant = await tx.productVariant.findUnique({
             where: { id: it.variantId },
-            data: {
-              stockQuantity: newVarStock,
-              status: newVarStock === 0 ? 'OUT_OF_STOCK' : undefined,
-            },
+            select: { stockQuantity: true },
           });
 
-          const newProdStock = it.productStock - it.quantity;
-          await tx.product.update({
+          if (freshVariant && freshVariant.stockQuantity === 0) {
+            await tx.productVariant.update({
+              where: { id: it.variantId },
+              data: { status: 'OUT_OF_STOCK' },
+            });
+          }
+
+          const freshProduct = await tx.product.findUnique({
             where: { id: it.productId },
-            data: {
-              stockQuantity: Math.max(0, newProdStock),
-              status: newProdStock <= 0 ? 'OUT_OF_STOCK' : undefined,
-            },
+            select: { stockQuantity: true },
           });
 
+          if (freshProduct && freshProduct.stockQuantity === 0) {
+            await tx.product.update({
+              where: { id: it.productId },
+              data: { status: 'OUT_OF_STOCK' },
+            });
+          }
+
+          const newVarStock = freshVariant?.stockQuantity ?? 0;
           await tx.inventoryAdjustment.create({
             data: {
               productId: it.productId,
               variantId: it.variantId,
               vendorId: it.vendorId,
-              previousQuantity: it.variantStock,
+              previousQuantity: newVarStock + it.quantity,
               newQuantity: newVarStock,
               quantityChanged: -it.quantity,
               adjustmentType: 'SALE',
@@ -246,24 +280,39 @@ export async function POST(req: NextRequest) {
             },
           });
         } else {
-          const newProdStock = it.productStock - it.quantity;
-          if (newProdStock < 0) {
-            throw new AppError(`Stock race condition for product ${it.productName}. Transaction rolled back.`, 400);
-          }
-
-          await tx.product.update({
-            where: { id: it.productId },
+          // Conditional atomic decrement on Product
+          const updatedProduct = await tx.product.updateMany({
+            where: {
+              id: it.productId,
+              stockQuantity: { gte: it.quantity },
+            },
             data: {
-              stockQuantity: newProdStock,
-              status: newProdStock === 0 ? 'OUT_OF_STOCK' : undefined,
+              stockQuantity: { decrement: it.quantity },
             },
           });
 
+          if (updatedProduct.count === 0) {
+            throw new AppError(`Insufficient stock for product "${it.productName}". Transaction aborted.`, 400);
+          }
+
+          const freshProduct = await tx.product.findUnique({
+            where: { id: it.productId },
+            select: { stockQuantity: true },
+          });
+
+          if (freshProduct && freshProduct.stockQuantity === 0) {
+            await tx.product.update({
+              where: { id: it.productId },
+              data: { status: 'OUT_OF_STOCK' },
+            });
+          }
+
+          const newProdStock = freshProduct?.stockQuantity ?? 0;
           await tx.inventoryAdjustment.create({
             data: {
               productId: it.productId,
               vendorId: it.vendorId,
-              previousQuantity: it.productStock,
+              previousQuantity: newProdStock + it.quantity,
               newQuantity: newProdStock,
               quantityChanged: -it.quantity,
               adjustmentType: 'SALE',

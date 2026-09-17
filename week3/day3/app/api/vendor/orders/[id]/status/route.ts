@@ -47,10 +47,16 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       // If cancelling, restore inventory
       if (nextStatus === 'CANCELLED' && vendorOrder.status !== 'CANCELLED') {
         for (const item of vendorOrder.items) {
+          if (!item.productId) continue;
+
+          const prod = await tx.product.findUnique({ where: { id: item.productId } });
+          if (!prod) continue; // Product was permanently deleted; skip restock gracefully
+
           if (item.variantId) {
             const variant = await tx.productVariant.findUnique({
               where: { id: item.variantId },
             });
+
             if (variant) {
               const restoredStock = variant.stockQuantity + item.quantity;
               await tx.productVariant.update({
@@ -61,23 +67,18 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
                 },
               });
 
-              if (item.productId) {
-                const prod = await tx.product.findUnique({ where: { id: item.productId } });
-                if (prod) {
-                  const restoredProdStock = prod.stockQuantity + item.quantity;
-                  await tx.product.update({
-                    where: { id: item.productId },
-                    data: {
-                      stockQuantity: restoredProdStock,
-                      status: restoredProdStock > 0 ? 'ACTIVE' : undefined,
-                    },
-                  });
-                }
-              }
+              const restoredProdStock = prod.stockQuantity + item.quantity;
+              await tx.product.update({
+                where: { id: item.productId },
+                data: {
+                  stockQuantity: restoredProdStock,
+                  status: restoredProdStock > 0 ? 'ACTIVE' : undefined,
+                },
+              });
 
               await tx.inventoryAdjustment.create({
                 data: {
-                  productId: item.productId || '',
+                  productId: item.productId,
                   variantId: item.variantId,
                   vendorId: vendor.id,
                   previousQuantity: variant.stockQuantity,
@@ -88,16 +89,14 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
                   changedByUserId: user.id,
                 },
               });
-            }
-          } else if (item.productId) {
-            const prod = await tx.product.findUnique({ where: { id: item.productId } });
-            if (prod) {
-              const restoredStock = prod.stockQuantity + item.quantity;
+            } else {
+              // Variant deleted, product exists
+              const restoredProdStock = prod.stockQuantity + item.quantity;
               await tx.product.update({
                 where: { id: item.productId },
                 data: {
-                  stockQuantity: restoredStock,
-                  status: restoredStock > 0 ? 'ACTIVE' : undefined,
+                  stockQuantity: restoredProdStock,
+                  status: restoredProdStock > 0 ? 'ACTIVE' : undefined,
                 },
               });
 
@@ -106,7 +105,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
                   productId: item.productId,
                   vendorId: vendor.id,
                   previousQuantity: prod.stockQuantity,
-                  newQuantity: restoredStock,
+                  newQuantity: restoredProdStock,
                   quantityChanged: item.quantity,
                   adjustmentType: 'RETURN',
                   reason: `Vendor cancelled order item ${vendorOrder.vendorOrderNumber}`,
@@ -114,6 +113,28 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
                 },
               });
             }
+          } else {
+            const restoredStock = prod.stockQuantity + item.quantity;
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                stockQuantity: restoredStock,
+                status: restoredStock > 0 ? 'ACTIVE' : undefined,
+              },
+            });
+
+            await tx.inventoryAdjustment.create({
+              data: {
+                productId: item.productId,
+                vendorId: vendor.id,
+                previousQuantity: prod.stockQuantity,
+                newQuantity: restoredStock,
+                quantityChanged: item.quantity,
+                adjustmentType: 'RETURN',
+                reason: `Vendor cancelled order item ${vendorOrder.vendorOrderNumber}`,
+                changedByUserId: user.id,
+              },
+            });
           }
         }
       }

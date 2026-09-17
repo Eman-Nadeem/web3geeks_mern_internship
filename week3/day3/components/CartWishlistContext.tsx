@@ -144,7 +144,26 @@ export function CartWishlistProvider({ children }: { children: React.ReactNode }
   }, [favorites, mounted]);
 
   const addToCart = async (item: Omit<CartItem, 'quantity'>, qty: number = 1): Promise<boolean> => {
-    // Attempt server addition
+    // 1. Optimistic instant UI update
+    const previousCart = cart;
+    const tempId = item.id ? `temp-${Date.now()}-${item.id}` : `temp-${Date.now()}`;
+
+    setCart((prev) => {
+      const existingIndex = prev.findIndex(
+        (i) => (i.id === item.id || (i.slug && i.slug === item.slug)) && i.variantId === item.variantId
+      );
+      if (existingIndex > -1) {
+        const next = [...prev];
+        next[existingIndex] = {
+          ...next[existingIndex],
+          quantity: next[existingIndex].quantity + qty,
+        };
+        return next;
+      }
+      return [...prev, { ...item, id: tempId, quantity: qty }];
+    });
+
+    // 2. Background server synchronization
     try {
       const res = await fetch('/api/cart/items', {
         method: 'POST',
@@ -155,35 +174,43 @@ export function CartWishlistProvider({ children }: { children: React.ReactNode }
           quantity: qty,
         }),
       });
-      if (res.ok) {
-        await refreshCart();
-        return true;
-      }
-    } catch {
-      // Offline / fallback to local state
-    }
 
-    setCart((prev) => {
-      const existing = prev.find((i) => i.id === item.id && i.variantId === item.variantId);
-      if (existing) {
-        return prev.map((i) =>
-          i.id === item.id && i.variantId === item.variantId
-            ? { ...i, quantity: i.quantity + qty }
-            : i
-        );
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        // If unauthenticated, local state remains as guest cart
+        if (res.status !== 401 && res.status !== 403) {
+          console.warn('Server cart update warning:', data?.error || res.statusText);
+        }
+      } else {
+        const data = await res.json().catch(() => null);
+        if (data?.data?.id) {
+          // Reconcile temporary ID with server cart item ID
+          setCart((prev) =>
+            prev.map((i) => (i.id === tempId ? { ...i, id: data.data.id } : i))
+          );
+        }
       }
-      return [...prev, { ...item, quantity: qty }];
-    });
-    return true;
+      return true;
+    } catch (err) {
+      console.warn('Background cart sync error (retaining offline cart):', err);
+      return true;
+    }
   };
 
   const removeFromCart = async (id: string) => {
-    try {
-      await fetch(`/api/cart/items/${id}`, { method: 'DELETE' });
-    } catch {
-      // Fallback
-    }
+    // Optimistic instant removal
+    const previousCart = cart;
     setCart((prev) => prev.filter((i) => i.id !== id));
+
+    try {
+      const res = await fetch(`/api/cart/items/${id}`, { method: 'DELETE' });
+      if (!res.ok && res.status !== 401) {
+        // Only revert if server rejected with a real error
+        console.warn('Server remove cart item failed');
+      }
+    } catch {
+      // Retain offline state
+    }
   };
 
   const updateQuantity = async (id: string, qty: number) => {
@@ -192,6 +219,11 @@ export function CartWishlistProvider({ children }: { children: React.ReactNode }
       return;
     }
 
+    // Optimistic instant update
+    setCart((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, quantity: qty } : i))
+    );
+
     try {
       await fetch(`/api/cart/items/${id}`, {
         method: 'PATCH',
@@ -199,21 +231,17 @@ export function CartWishlistProvider({ children }: { children: React.ReactNode }
         body: JSON.stringify({ quantity: qty }),
       });
     } catch {
-      // Fallback
+      // Retain offline state
     }
-
-    setCart((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, quantity: qty } : i))
-    );
   };
 
   const clearCart = async () => {
+    setCart([]);
     try {
       await fetch('/api/cart', { method: 'DELETE' });
     } catch {
-      // Fallback
+      // Retain offline state
     }
-    setCart([]);
   };
 
   const toggleFavorite = (item: FavoriteItem) => {

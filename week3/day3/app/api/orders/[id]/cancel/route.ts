@@ -33,6 +33,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         data: { status: 'CANCELLED' },
       });
 
+      const orphanedItems: Array<{ sku: string; name: string; reason: string }> = [];
+
       // 2. Update each vendor order and restore inventory
       for (const vo of order.vendorOrders) {
         await tx.vendorOrder.update({
@@ -41,10 +43,30 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         });
 
         for (const item of vo.items) {
+          if (!item.productId) {
+            orphanedItems.push({
+              sku: item.skuSnapshot,
+              name: item.productNameSnapshot,
+              reason: 'Product record was permanently removed from catalog',
+            });
+            continue;
+          }
+
+          const prod = await tx.product.findUnique({ where: { id: item.productId } });
+          if (!prod) {
+            orphanedItems.push({
+              sku: item.skuSnapshot,
+              name: item.productNameSnapshot,
+              reason: 'Product record was permanently removed from catalog',
+            });
+            continue;
+          }
+
           if (item.variantId) {
             const variant = await tx.productVariant.findUnique({
               where: { id: item.variantId },
             });
+
             if (variant) {
               const restoredStock = variant.stockQuantity + item.quantity;
               await tx.productVariant.update({
@@ -55,23 +77,18 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
                 },
               });
 
-              if (item.productId) {
-                const prod = await tx.product.findUnique({ where: { id: item.productId } });
-                if (prod) {
-                  const restoredProdStock = prod.stockQuantity + item.quantity;
-                  await tx.product.update({
-                    where: { id: item.productId },
-                    data: {
-                      stockQuantity: restoredProdStock,
-                      status: restoredProdStock > 0 ? 'ACTIVE' : undefined,
-                    },
-                  });
-                }
-              }
+              const restoredProdStock = prod.stockQuantity + item.quantity;
+              await tx.product.update({
+                where: { id: item.productId },
+                data: {
+                  stockQuantity: restoredProdStock,
+                  status: restoredProdStock > 0 ? 'ACTIVE' : undefined,
+                },
+              });
 
               await tx.inventoryAdjustment.create({
                 data: {
-                  productId: item.productId || '',
+                  productId: item.productId,
                   variantId: item.variantId,
                   vendorId: vo.vendorId,
                   previousQuantity: variant.stockQuantity,
@@ -82,18 +99,14 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
                   changedByUserId: user.id,
                 },
               });
-            }
-          } else if (item.productId) {
-            const prod = await tx.product.findUnique({
-              where: { id: item.productId },
-            });
-            if (prod) {
-              const restoredStock = prod.stockQuantity + item.quantity;
+            } else {
+              // Variant was deleted but parent product still exists: restore product stock
+              const restoredProdStock = prod.stockQuantity + item.quantity;
               await tx.product.update({
                 where: { id: item.productId },
                 data: {
-                  stockQuantity: restoredStock,
-                  status: restoredStock > 0 ? 'ACTIVE' : undefined,
+                  stockQuantity: restoredProdStock,
+                  status: restoredProdStock > 0 ? 'ACTIVE' : undefined,
                 },
               });
 
@@ -102,7 +115,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
                   productId: item.productId,
                   vendorId: vo.vendorId,
                   previousQuantity: prod.stockQuantity,
-                  newQuantity: restoredStock,
+                  newQuantity: restoredProdStock,
                   quantityChanged: item.quantity,
                   adjustmentType: 'RETURN',
                   reason: `Customer cancelled order ${order.orderNumber}`,
@@ -110,11 +123,33 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
                 },
               });
             }
+          } else {
+            const restoredStock = prod.stockQuantity + item.quantity;
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                stockQuantity: restoredStock,
+                status: restoredStock > 0 ? 'ACTIVE' : undefined,
+              },
+            });
+
+            await tx.inventoryAdjustment.create({
+              data: {
+                productId: item.productId,
+                vendorId: vo.vendorId,
+                previousQuantity: prod.stockQuantity,
+                newQuantity: restoredStock,
+                quantityChanged: item.quantity,
+                adjustmentType: 'RETURN',
+                reason: `Customer cancelled order ${order.orderNumber}`,
+                changedByUserId: user.id,
+              },
+            });
           }
         }
       }
 
-      return await tx.order.findUnique({
+      const finalOrder = await tx.order.findUnique({
         where: { id: orderId },
         include: {
           vendorOrders: {
@@ -125,6 +160,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
           },
         },
       });
+
+      return {
+        order: finalOrder,
+        orphanedItems: orphanedItems.length > 0 ? orphanedItems : undefined,
+      };
     });
 
     return successResponse(updatedOrder);

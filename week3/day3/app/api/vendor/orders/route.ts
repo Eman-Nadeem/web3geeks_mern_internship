@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireVendor, successResponse, errorResponse, AppError } from '@/lib/guards';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, Prisma } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const statusFilter = searchParams.get('status') as OrderStatus | null;
 
-    const whereClause: any = {
+    const whereClause: Prisma.VendorOrderWhereInput = {
       vendorId: vendor.id,
     };
 

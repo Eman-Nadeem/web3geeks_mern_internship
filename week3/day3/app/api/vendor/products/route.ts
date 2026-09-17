@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { productCreateSchema } from '@/lib/validations';
 import { requireVendor, errorResponse, successResponse } from '@/lib/guards';
-import { ProductStatus, AdjustmentType } from '@prisma/client';
+import { ProductStatus, AdjustmentType, VendorStatus, Prisma } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     const availability = searchParams.get('availability');
     const sort = searchParams.get('sort') || 'newest';
 
-    const where: any = {
+    const where: Prisma.ProductWhereInput = {
       vendorId: vendor.id,
     };
 
@@ -45,10 +45,9 @@ export async function GET(req: NextRequest) {
       ];
     } else if (availability === 'low_stock') {
       where.stockQuantity = { gt: 0 };
-      // low-stock threshold comparison will be handled or filtered
     }
 
-    let orderBy: any = { createdAt: 'desc' };
+    let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: 'desc' };
     if (sort === 'oldest') {
       orderBy = { createdAt: 'asc' };
     } else if (sort === 'price_asc') {
@@ -86,7 +85,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { user, vendor } = await requireVendor(['ACTIVE']);
+    const { user, vendor } = await requireVendor(['ACTIVE', 'PENDING']);
 
     const body = await req.json();
     const result = productCreateSchema.safeParse(body);
@@ -110,6 +109,17 @@ export async function POST(req: NextRequest) {
       variants,
       imageUrl,
     } = result.data;
+
+    // Pre-validate duplicate SKUs in the incoming variants array
+    if (variants && variants.length > 0) {
+      const skus = variants.map((v) => v.sku.trim().toLowerCase());
+      const duplicateSku = skus.find((s, index) => skus.indexOf(s) !== index);
+      if (duplicateSku) {
+        return errorResponse('Validation failed', 409, {
+          variants: [`Duplicate variant SKU "${duplicateSku}" provided for this product.`],
+        });
+      }
+    }
 
     // Check slug uniqueness globally
     const existingSlug = await prisma.product.findUnique({
@@ -171,9 +181,11 @@ export async function POST(req: NextRequest) {
       effectiveStock = variants.reduce((sum, v) => sum + (v.stockQuantity || 0), 0);
     }
 
-    // Auto-transition status if stock is 0
+    // If vendor is PENDING, product is strictly forced to DRAFT status until vendor approval
     let effectiveStatus = status;
-    if (effectiveStock === 0 && status === ProductStatus.ACTIVE) {
+    if (vendor.status === VendorStatus.PENDING) {
+      effectiveStatus = ProductStatus.DRAFT;
+    } else if (effectiveStock === 0 && status === ProductStatus.ACTIVE) {
       effectiveStatus = ProductStatus.OUT_OF_STOCK;
     }
 
@@ -206,7 +218,7 @@ export async function POST(req: NextRequest) {
               price: variant.price || null,
               stockQuantity: variant.stockQuantity,
               imageUrl: variant.imageUrl || null,
-              status: variant.status || ProductStatus.ACTIVE,
+              status: vendor.status === VendorStatus.PENDING ? ProductStatus.DRAFT : (variant.status || ProductStatus.ACTIVE),
             })),
           },
         },
@@ -252,9 +264,27 @@ export async function POST(req: NextRequest) {
 
     return successResponse(product, 201);
   } catch (err: unknown) {
-    if (err && typeof err === 'object' && 'statusCode' in err && 'message' in err) {
-      const appErr = err as { message: string; statusCode: number; details?: unknown };
-      return errorResponse(appErr.message, appErr.statusCode, appErr.details);
+    if (err && typeof err === 'object') {
+      if ('code' in err && (err as { code: string }).code === 'P2002') {
+        const target = (err as { meta?: { target?: string[] | string } }).meta?.target;
+        const targetStr = Array.isArray(target) ? target.join(', ') : String(target || '');
+        if (targetStr.includes('sku') || targetStr.includes('ProductVariant')) {
+          return errorResponse('Validation failed', 409, {
+            sku: ['A variant with this SKU already exists for this product.'],
+          });
+        }
+        if (targetStr.includes('slug')) {
+          return errorResponse('Validation failed', 409, {
+            slug: ['A product with this slug already exists.'],
+          });
+        }
+        return errorResponse('A unique constraint was violated.', 409);
+      }
+
+      if ('statusCode' in err && 'message' in err) {
+        const appErr = err as { message: string; statusCode: number; details?: unknown };
+        return errorResponse(appErr.message, appErr.statusCode, appErr.details);
+      }
     }
     console.error('Product creation error:', err);
     return errorResponse('Failed to create product', 500);

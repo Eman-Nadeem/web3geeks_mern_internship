@@ -33,6 +33,7 @@ vi.mock('@/lib/prisma', () => {
         findFirst: vi.fn(),
         findMany: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
         count: vi.fn(),
       },
       productVariant: {
@@ -40,6 +41,7 @@ vi.mock('@/lib/prisma', () => {
         findFirst: vi.fn(),
         findMany: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       cart: {
         findUnique: vi.fn(),
@@ -102,6 +104,8 @@ const prismaMock = prisma as any;
 describe('Day 3 — Multi-Vendor Cart, Checkout & Order Splitting Test Suite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.product.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.productVariant.updateMany.mockResolvedValue({ count: 1 });
   });
 
   // --------------------------------------------------------------------------
@@ -454,10 +458,10 @@ describe('Day 3 — Multi-Vendor Cart, Checkout & Order Splitting Test Suite', (
       variants: [],
     });
 
-    let updatedStock: number | null = null;
-    prismaMock.product.update.mockImplementationOnce(({ data }: any) => {
-      updatedStock = data.stockQuantity;
-      return Promise.resolve({});
+    let atomicDecrement: any = null;
+    prismaMock.product.updateMany.mockImplementationOnce(({ data }: any) => {
+      atomicDecrement = data.stockQuantity;
+      return Promise.resolve({ count: 1 });
     });
 
     let recordedAdjustment: any = null;
@@ -485,7 +489,7 @@ describe('Day 3 — Multi-Vendor Cart, Checkout & Order Splitting Test Suite', (
 
     await performCheckout(req);
 
-    expect(updatedStock).toBe(7); // 10 - 3
+    expect(atomicDecrement).toEqual({ decrement: 3 }); // Atomic decrement of 3
     expect(recordedAdjustment).not.toBeNull();
     expect(recordedAdjustment.adjustmentType).toBe('SALE');
     expect(recordedAdjustment.quantityChanged).toBe(-3);
