@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -78,7 +78,7 @@ export default function LoginPage() {
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
-              onClick={() => fillDemo('customer@example.com')}
+              onClick={() => fillDemo('sophia@example.com')}
               className="py-1.5 px-2 rounded-lg bg-(--surface-card-subtle) hover:bg-(--border-dark) border border-(--border-dark) text-[12px] font-semibold text-(--text-on-dark) flex items-center justify-center gap-1 transition-colors cursor-pointer"
             >
               <User className="w-3.5 h-3.5 text-emerald-500" />
@@ -86,7 +86,7 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => fillDemo('alex@techstore.com')}
+              onClick={() => fillDemo('alex@novatech.com')}
               className="py-1.5 px-2 rounded-lg bg-(--surface-card-subtle) hover:bg-(--border-dark) border border-(--border-dark) text-[12px] font-semibold text-(--text-on-dark) flex items-center justify-center gap-1 transition-colors cursor-pointer"
             >
               <Store className="w-3.5 h-3.5 text-emerald-500" />
@@ -94,7 +94,7 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => fillDemo('admin@marketplace.com')}
+              onClick={() => fillDemo('admin@nexusmarket.com')}
               className="py-1.5 px-2 rounded-lg bg-(--surface-card-subtle) hover:bg-(--border-dark) border border-(--border-dark) text-[12px] font-semibold text-(--text-on-dark) flex items-center justify-center gap-1 transition-colors cursor-pointer"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
