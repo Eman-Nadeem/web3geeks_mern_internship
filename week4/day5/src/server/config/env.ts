@@ -41,33 +41,41 @@ const envSchema = z
           message: "UPSTASH_REDIS_REST_URL is required when UPSTASH_REDIS_REST_TOKEN is set",
         });
       }
-      if (!data.PUSHER_APP_ID) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["PUSHER_APP_ID"],
-          message: "PUSHER_APP_ID is required in production",
-        });
-      }
-      if (!data.PUSHER_KEY) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["PUSHER_KEY"],
-          message: "PUSHER_KEY is required in production",
-        });
-      }
-      if (!data.PUSHER_SECRET) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["PUSHER_SECRET"],
-          message: "PUSHER_SECRET is required in production",
-        });
-      }
-      if (!data.PUSHER_CLUSTER) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["PUSHER_CLUSTER"],
-          message: "PUSHER_CLUSTER is required in production",
-        });
+      const hasPusherAny = !!(
+        data.PUSHER_APP_ID ||
+        data.PUSHER_KEY ||
+        data.PUSHER_SECRET ||
+        data.PUSHER_CLUSTER
+      );
+      if (hasPusherAny) {
+        if (!data.PUSHER_APP_ID) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["PUSHER_APP_ID"],
+            message: "PUSHER_APP_ID is required when Pusher is configured",
+          });
+        }
+        if (!data.PUSHER_KEY) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["PUSHER_KEY"],
+            message: "PUSHER_KEY is required when Pusher is configured",
+          });
+        }
+        if (!data.PUSHER_SECRET) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["PUSHER_SECRET"],
+            message: "PUSHER_SECRET is required when Pusher is configured",
+          });
+        }
+        if (!data.PUSHER_CLUSTER) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["PUSHER_CLUSTER"],
+            message: "PUSHER_CLUSTER is required when Pusher is configured",
+          });
+        }
       }
     }
   });
