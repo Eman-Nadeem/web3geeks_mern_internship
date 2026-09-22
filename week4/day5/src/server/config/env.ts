@@ -26,25 +26,19 @@ const envSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.NODE_ENV === "production") {
-      if (!data.UPSTASH_REDIS_REST_URL) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["UPSTASH_REDIS_REST_URL"],
-          message: "UPSTASH_REDIS_REST_URL is required in production",
-        });
-      }
-      if (!data.UPSTASH_REDIS_REST_TOKEN) {
+      // If one Upstash Redis variable is provided, both must be provided
+      if (data.UPSTASH_REDIS_REST_URL && !data.UPSTASH_REDIS_REST_TOKEN) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["UPSTASH_REDIS_REST_TOKEN"],
-          message: "UPSTASH_REDIS_REST_TOKEN is required in production",
+          message: "UPSTASH_REDIS_REST_TOKEN is required when UPSTASH_REDIS_REST_URL is set",
         });
       }
-      if (!data.RESEND_API_KEY) {
+      if (data.UPSTASH_REDIS_REST_TOKEN && !data.UPSTASH_REDIS_REST_URL) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          path: ["RESEND_API_KEY"],
-          message: "RESEND_API_KEY is required in production",
+          path: ["UPSTASH_REDIS_REST_URL"],
+          message: "UPSTASH_REDIS_REST_URL is required when UPSTASH_REDIS_REST_TOKEN is set",
         });
       }
       if (!data.PUSHER_APP_ID) {
