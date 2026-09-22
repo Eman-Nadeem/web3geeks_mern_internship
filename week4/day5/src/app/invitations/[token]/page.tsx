@@ -9,6 +9,7 @@ import { PublicInvitationDTO } from "@/types";
 import { useAuth } from "@/providers/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { formatDate } from "@/lib/utils";
@@ -24,6 +25,9 @@ import {
   Layers,
   Sparkles,
   Loader2,
+  Lock,
+  UserPlus,
+  LogIn,
 } from "lucide-react";
 
 export default function InvitationAcceptancePage() {
@@ -32,8 +36,14 @@ export default function InvitationAcceptancePage() {
   const queryClient = useQueryClient();
   const token = typeof params.token === "string" ? params.token : "";
 
-  const { user: authUser, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth();
-  const [acceptError, setAcceptError] = useState<string | null>(null);
+  const { user: authUser, isAuthenticated, isLoading: isAuthLoading, login, register: registerUser, logout } = useAuth();
+  
+  // Local form states
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmittingForm, setIsSubmittingForm] = useState(false);
+  const [loginPassword, setLoginPassword] = useState("");
+  const [regName, setRegName] = useState("");
+  const [regPassword, setRegPassword] = useState("");
 
   // 1. Fetch public invitation details by token
   const {
@@ -43,23 +53,24 @@ export default function InvitationAcceptancePage() {
   } = useQuery({
     queryKey: ["invitation", token],
     queryFn: async () => {
-      const res = await api.get<{ invitation: PublicInvitationDTO }>(
-        `/invitations/${token}`
-      );
-      return res.invitation;
+      const res = await api.get<any>(`/invitations/${token}`);
+      // Handle both { invitation: ... } and direct invitation object
+      return (res?.invitation ?? res) as PublicInvitationDTO;
     },
     enabled: !!token,
     retry: false,
   });
 
-  // 2. Accept Invitation Mutation
+  // 2. Accept Invitation Mutation (for already-authenticated users)
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      return api.post<{ membership: any }>(`/invitations/${token}/accept`);
+      return api.post<{ organizationId: string; organizationSlug: string }>(
+        `/invitations/${token}/accept`
+      );
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
-      const orgSlug = invitation?.organization?.slug;
+      const orgSlug = data?.organizationSlug || invitation?.organization?.slug;
       if (orgSlug) {
         localStorage.setItem("last_org_slug", orgSlug);
         router.push(`/dashboard/${orgSlug}`);
@@ -69,12 +80,93 @@ export default function InvitationAcceptancePage() {
     },
     onError: (err) => {
       if (err instanceof ApiError) {
-        setAcceptError(err.message);
+        setFormError(err.message);
       } else {
-        setAcceptError("Failed to accept invitation. Please try again.");
+        setFormError("Failed to accept invitation. Please try again.");
       }
     },
   });
+
+  // Handle Sign In & Accept in one step
+  const handleLoginAndAccept = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginPassword || !invitation) return;
+    setFormError(null);
+    setIsSubmittingForm(true);
+
+    try {
+      // 1. Authenticate user
+      await login({
+        email: invitation.email,
+        password: loginPassword,
+      });
+
+      // 2. Accept invitation
+      const acceptRes = await api.post<{ organizationId: string; organizationSlug: string }>(
+        `/invitations/${token}/accept`
+      );
+
+      // 3. Invalidate organizations list so new org appears immediately
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+
+      const orgSlug = acceptRes?.organizationSlug || invitation.organization.slug;
+      if (orgSlug) {
+        localStorage.setItem("last_org_slug", orgSlug);
+        router.push(`/dashboard/${orgSlug}`);
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        setFormError(err.message);
+      } else {
+        setFormError(err?.message || "Failed to sign in and accept invitation.");
+      }
+    } finally {
+      setIsSubmittingForm(false);
+    }
+  };
+
+  // Handle Create Account & Accept in one step
+  const handleRegisterAndAccept = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!regName.trim() || !regPassword || !invitation) return;
+    setFormError(null);
+    setIsSubmittingForm(true);
+
+    try {
+      // 1. Create account
+      await registerUser({
+        name: regName.trim(),
+        email: invitation.email,
+        password: regPassword,
+      });
+
+      // 2. Accept invitation
+      const acceptRes = await api.post<{ organizationId: string; organizationSlug: string }>(
+        `/invitations/${token}/accept`
+      );
+
+      // 3. Invalidate organizations query
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+
+      const orgSlug = acceptRes?.organizationSlug || invitation.organization.slug;
+      if (orgSlug) {
+        localStorage.setItem("last_org_slug", orgSlug);
+        router.push(`/dashboard/${orgSlug}`);
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        setFormError(err.message);
+      } else {
+        setFormError(err?.message || "Failed to create account and accept invitation.");
+      }
+    } finally {
+      setIsSubmittingForm(false);
+    }
+  };
 
   const handleSwitchAccount = async () => {
     await logout();
@@ -147,9 +239,6 @@ export default function InvitationAcceptancePage() {
     isAuthenticated &&
     authUser?.email?.toLowerCase() !== invitation.email.toLowerCase();
 
-  const loginUrl = `/login?email=${encodeURIComponent(invitation.email)}&redirect=/invitations/${token}`;
-  const registerUrl = `/register?email=${encodeURIComponent(invitation.email)}&redirect=/invitations/${token}`;
-
   return (
     <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-slate-50 dark:bg-[#0b0f17] transition-colors duration-200 relative">
       <div className="absolute top-4 right-4">
@@ -171,7 +260,7 @@ export default function InvitationAcceptancePage() {
 
         {/* Main Card */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 backdrop-blur-xl p-8 shadow-xl dark:shadow-2xl space-y-6">
-          {acceptError && <Alert variant="error">{acceptError}</Alert>}
+          {formError && <Alert variant="error">{formError}</Alert>}
 
           {/* Org & Inviter Details Banner */}
           <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60">
@@ -212,54 +301,52 @@ export default function InvitationAcceptancePage() {
             </div>
           </div>
 
-          {/* Conditional Action States */}
+          {/* ─────────────────────────────────────────────────────────────
+              CONDITIONAL ACTIONS:
+              Case 1: User is already logged in as the invited email
+              Case 2: User is already logged in as a DIFFERENT email
+              Case 3: Unauthenticated & Account ALREADY EXISTS (Sign in)
+              Case 4: Unauthenticated & Account DOES NOT EXIST (Create account)
+             ───────────────────────────────────────────────────────────── */}
 
-          {/* STATE 1: Unauthenticated */}
-          {!isAuthenticated && (
-            <div className="space-y-4 pt-2">
-              <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs flex items-center gap-2">
-                <Sparkles className="w-4 h-4 shrink-0 text-blue-400" />
-                <span>Sign in or create an account with <strong>{invitation.email}</strong> to accept this invitation.</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Link href={loginUrl}>
-                  <Button variant="primary" size="lg" className="w-full">
-                    <span>Log in to Accept</span>
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
-                <Link href={registerUrl}>
-                  <Button variant="secondary" size="lg" className="w-full">
-                    <span>Create Account</span>
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {/* STATE 2: Authenticated with MATCHING email */}
+          {/* CASE 1: Signed in with MATCHING email */}
           {isEmailMatching && (
             <div className="space-y-4 pt-2">
-              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-                <span>You are signed in as <strong>{authUser.email}</strong>. Ready to join!</span>
-              </div>
-
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full shadow-lg shadow-blue-500/20"
-                onClick={() => acceptMutation.mutate()}
-                isLoading={acceptMutation.isPending}
-              >
-                <UserCheck className="w-5 h-5 mr-2" />
-                <span>Accept Invitation & Join Team</span>
-              </Button>
+              {invitation.isAlreadyMember ? (
+                <div className="space-y-4">
+                  <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-blue-400" />
+                    <span>You are already a member of <strong>{invitation.organization.name}</strong>.</span>
+                  </div>
+                  <Link href={`/dashboard/${invitation.organization.slug}`} className="block">
+                    <Button variant="primary" size="lg" className="w-full">
+                      <span>Go to Workspace Dashboard</span>
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                    <span>Signed in as <strong>{authUser.email}</strong>. Ready to join!</span>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full shadow-lg shadow-blue-500/20"
+                    onClick={() => acceptMutation.mutate()}
+                    isLoading={acceptMutation.isPending}
+                  >
+                    <UserCheck className="w-5 h-5 mr-2" />
+                    <span>Accept Invitation & Join Team</span>
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
-          {/* STATE 3: Authenticated with DIFFERENT email */}
+          {/* CASE 2: Signed in with DIFFERENT email */}
           {isEmailMismatched && (
             <div className="space-y-4 pt-2">
               <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-2">
@@ -268,7 +355,7 @@ export default function InvitationAcceptancePage() {
                   <span>Account Email Mismatch</span>
                 </div>
                 <p>
-                  You are currently signed in as <strong className="text-white">{authUser?.email}</strong>, but this invitation was sent specifically to <strong className="text-white">{invitation.email}</strong>.
+                  You are currently signed in as <strong className="text-white">{authUser?.email}</strong>, but this invitation was sent to <strong className="text-white">{invitation.email}</strong>.
                 </p>
               </div>
 
@@ -281,6 +368,105 @@ export default function InvitationAcceptancePage() {
                 <LogOut className="w-4 h-4 mr-2" />
                 <span>Log out & Switch to {invitation.email}</span>
               </Button>
+            </div>
+          )}
+
+          {/* CASE 3: Not signed in & Account ALREADY EXISTS */}
+          {!isAuthenticated && invitation.accountExists && (
+            <div className="space-y-4 pt-2">
+              <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs flex items-center gap-2">
+                <Sparkles className="w-4 h-4 shrink-0 text-blue-400" />
+                <span>Account found! Enter your password to accept and add <strong>{invitation.organization.name}</strong> to your workspaces.</span>
+              </div>
+
+              <form onSubmit={handleLoginAndAccept} className="space-y-3">
+                <Input
+                  label="Password"
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  required
+                />
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  className="w-full shadow-lg shadow-blue-500/20"
+                  isLoading={isSubmittingForm}
+                >
+                  <LogIn className="w-4 h-4 mr-2" />
+                  <span>Sign In & Join {invitation.organization.name}</span>
+                </Button>
+              </form>
+
+              <div className="pt-2 text-center text-xs text-slate-500 dark:text-slate-400">
+                <span>Want to sign in with a different account? </span>
+                <Link
+                  href={`/login?redirect=/invitations/${token}`}
+                  className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                >
+                  Sign in
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* CASE 4: Not signed in & Account DOES NOT EXIST */}
+          {!isAuthenticated && !invitation.accountExists && (
+            <div className="space-y-4 pt-2">
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
+                <Sparkles className="w-4 h-4 shrink-0 text-emerald-400" />
+                <span>No account found for this email. Create your account below to join <strong>{invitation.organization.name}</strong> immediately!</span>
+              </div>
+
+              <form onSubmit={handleRegisterAndAccept} className="space-y-3">
+                <Input
+                  label="Your Full Name"
+                  type="text"
+                  placeholder="Jane Doe"
+                  autoComplete="name"
+                  value={regName}
+                  onChange={(e) => setRegName(e.target.value)}
+                  required
+                />
+
+                <Input
+                  label="Password"
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
+                  required
+                />
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Must be at least 8 characters with uppercase, lowercase, and a number.
+                </p>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  className="w-full shadow-lg shadow-emerald-500/20"
+                  isLoading={isSubmittingForm}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  <span>Create Account & Join {invitation.organization.name}</span>
+                </Button>
+              </form>
+
+              <div className="pt-2 text-center text-xs text-slate-500 dark:text-slate-400">
+                <span>Already have an account under another email? </span>
+                <Link
+                  href={`/login?redirect=/invitations/${token}`}
+                  className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                >
+                  Sign in
+                </Link>
+              </div>
             </div>
           )}
         </div>

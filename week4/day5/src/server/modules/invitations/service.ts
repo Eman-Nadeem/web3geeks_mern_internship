@@ -20,6 +20,19 @@ export function computeExpiryDate(): Date {
   return new Date(Date.now() + hours * 60 * 60 * 1000);
 }
 
+export function getAppUrl(): string {
+  if (env.NEXT_PUBLIC_APP_URL && !env.NEXT_PUBLIC_APP_URL.includes("localhost")) {
+    return env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`.replace(/\/$/, "");
+  }
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+    return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`.replace(/\/$/, "");
+  }
+  return (env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
+}
+
 export async function createInvitation(
   organizationId: string,
   actor: { userId: string; role: Role },
@@ -104,7 +117,7 @@ export async function createInvitation(
     where: { id: actor.userId },
   });
 
-  const invitationLink = `${env.NEXT_PUBLIC_APP_URL}/invitations/${rawToken}`;
+  const invitationLink = `${getAppUrl()}/invitations/${rawToken}`;
 
   // Send invitation email
   await sendInvitationEmail({
@@ -203,7 +216,7 @@ export async function resendInvitation(
     where: { id: actor.userId },
   });
 
-  const invitationLink = `${env.NEXT_PUBLIC_APP_URL}/invitations/${rawToken}`;
+  const invitationLink = `${getAppUrl()}/invitations/${rawToken}`;
 
   await sendInvitationEmail({
     to: updated.email,
@@ -302,6 +315,25 @@ export async function getInvitationByToken(
   const isMatchingUser =
     !!currentUser && currentUser.email.toLowerCase() === invitation.email.toLowerCase();
 
+  const targetUser = await prisma.user.findUnique({
+    where: { email: invitation.email.toLowerCase() },
+    select: { id: true, name: true, email: true },
+  });
+  const accountExists = !!targetUser;
+
+  let isAlreadyMember = false;
+  if (currentUser) {
+    const existingMembership = await prisma.membership.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: currentUser.id,
+          organizationId: invitation.organization.id,
+        },
+      },
+    });
+    isAlreadyMember = !!existingMembership;
+  }
+
   return {
     id: invitation.id,
     email: invitation.email,
@@ -316,6 +348,8 @@ export async function getInvitationByToken(
     isMatchingUser,
     isAuthenticated: !!currentUser,
     currentUserEmail: currentUser?.email,
+    accountExists,
+    isAlreadyMember,
   };
 }
 
@@ -369,7 +403,15 @@ export async function acceptInvitation(
       });
 
       if (existingMember) {
-        throw AppError.conflict("You are already a member of this organization");
+        // User already has membership, idempotently mark invitation as ACCEPTED
+        await tx.invitation.update({
+          where: { id: invitation.id },
+          data: {
+            status: "ACCEPTED",
+            acceptedAt: new Date(),
+          },
+        });
+        return;
       }
 
       await tx.membership.create({
@@ -390,9 +432,10 @@ export async function acceptInvitation(
     });
   } catch (err: any) {
     if (err.code === "P2002") {
-      throw AppError.conflict("You are already a member of this organization");
+      // Idempotent catch if duplicate membership race condition occurred
+    } else {
+      throw err;
     }
-    throw err;
   }
 
   return {

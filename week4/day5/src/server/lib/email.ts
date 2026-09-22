@@ -39,9 +39,14 @@ export async function sendInvitationEmail(params: InvitationEmailParams): Promis
     return { id: `simulated-${Date.now()}`, simulated: true };
   }
 
+  const fromAddress =
+    env.EMAIL_FROM && !env.EMAIL_FROM.includes("yourdomain.com")
+      ? env.EMAIL_FROM
+      : "Team Collab <onboarding@resend.dev>";
+
   try {
     const { data, error } = await client.emails.send({
-      from: env.EMAIL_FROM,
+      from: fromAddress,
       to,
       subject: `You've been invited to join ${organizationName} on Team Collab`,
       html: `

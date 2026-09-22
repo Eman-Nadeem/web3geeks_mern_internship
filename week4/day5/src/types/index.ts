@@ -140,6 +140,8 @@ export interface PublicInvitationDTO {
   isMatchingUser: boolean;
   isAuthenticated: boolean;
   currentUserEmail?: string;
+  accountExists?: boolean;
+  isAlreadyMember?: boolean;
 }
 
 export interface ApiResponse<T = unknown> {

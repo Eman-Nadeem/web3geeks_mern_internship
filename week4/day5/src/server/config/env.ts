@@ -13,7 +13,7 @@ const envSchema = z
     UPSTASH_REDIS_REST_URL: z.string().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
     RESEND_API_KEY: z.string().optional(),
-    EMAIL_FROM: z.string().default("Team Collab <noreply@yourdomain.com>"),
+    EMAIL_FROM: z.string().default("Team Collab <onboarding@resend.dev>"),
     BLOB_READ_WRITE_TOKEN: z.string().optional(),
     INVITATION_EXPIRES_IN_HOURS: z.coerce.number().default(72),
     // Pusher – optional in dev (feature silently no-ops without credentials)
